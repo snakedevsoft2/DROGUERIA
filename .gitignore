@@ -13,7 +13,6 @@
 /.zed
 /auth.json
 /node_modules
-/public/build
 /public/hot
 /public/storage
 /storage/*.key
@@ -22,3 +21,8 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Los assets compilados por Vite se versionan a proposito: Vercel los sirve
+# como estaticos y la funcion PHP necesita public/build/manifest.json.
+# Regenerar con: npm run build
+!/public/build

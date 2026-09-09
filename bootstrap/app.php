@@ -11,7 +11,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Detrás del proxy de Vercel la petición llega por HTTP; sin esto
+        // Laravel genera URLs y assets en http:// y el navegador los bloquea
+        // como contenido mixto. El proxy es de confianza, de ahí el '*'.
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

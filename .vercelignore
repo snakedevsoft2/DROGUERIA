@@ -1,0 +1,17 @@
+# Composer las reinstala durante el build en Vercel.
+/vendor
+/node_modules
+
+# Los assets compilados sí se suben (public/build); el resto no hace falta.
+/tests
+/storage/logs
+/storage/framework/cache
+/storage/framework/sessions
+/storage/framework/views
+/database/*.sqlite
+/.git
+/.github
+/.claude
+phpunit.xml
+README.md
+DEPLOY.md
