@@ -61,9 +61,9 @@ class PosComponent extends Component
         return Product::query()
             ->where('is_active', true)
             ->where(function ($query) use ($term) {
-                $query->where('name', 'like', "%{$term}%")
-                    ->orWhere('barcode', 'like', "%{$term}%")
-                    ->orWhere('presentation', 'like', "%{$term}%");
+                $query->where('name', 'ilike', "%{$term}%")
+                    ->orWhere('barcode', 'ilike', "%{$term}%")
+                    ->orWhere('presentation', 'ilike', "%{$term}%");
             })
             ->withSum(['batches as total_stock' => fn ($q) => $this->availableBatches($q)], 'stock')
             ->orderBy('name')
@@ -294,7 +294,7 @@ class PosComponent extends Component
         try {
             $sale = DB::transaction(function () {
                 $sale = Sale::create([
-                    'invoice_number' => $this->nextInvoiceNumber(),
+                    'invoice_number' => 'TMP-'.uniqid(),
                     'subtotal' => $this->subtotal,
                     'tax' => $this->tax,
                     'discount' => $this->discountAmount,
@@ -303,6 +303,12 @@ class PosComponent extends Component
                     'change_amount' => $this->change,
                     'payment_method' => $this->paymentMethod,
                     'user_id' => Auth::id(),
+                ]);
+
+                // El consecutivo se deriva del id que asigna la propia base.
+                // Ver nota en nextInvoiceNumber() sobre por qué no se bloquea.
+                $sale->update([
+                    'invoice_number' => $this->nextInvoiceNumber($sale->id),
                 ]);
 
                 foreach ($this->cart as $item) {
@@ -371,11 +377,17 @@ class PosComponent extends Component
         }
     }
 
-    /** Called inside the sale transaction, where the row lock serialises callers. */
-    protected function nextInvoiceNumber(): string
+    /**
+     * Consecutivo de factura derivado del id que asigna la base de datos.
+     *
+     * Antes se calculaba con Sale::lockForUpdate()->max('id'), pero PostgreSQL
+     * prohíbe combinar FOR UPDATE con funciones de agregación y devuelve
+     * SQLSTATE[0A000]. Ese bloqueo tampoco serializaba nada: no hay fila que
+     * bloquear sobre un agregado. La secuencia de Postgres ya garantiza que
+     * el id sea único y creciente, así que el número se deriva de él.
+     */
+    protected function nextInvoiceNumber(int $saleId): string
     {
-        $last = Sale::lockForUpdate()->max('id');
-
-        return 'FAC-'.str_pad((string) ($last + 1), 8, '0', STR_PAD_LEFT);
+        return 'FAC-'.str_pad((string) $saleId, 8, '0', STR_PAD_LEFT);
     }
 }
