@@ -61,8 +61,8 @@
 
         .logo {
             display: block;
-            max-width: 52mm;
-            max-height: 22mm;
+            max-width: 46mm;
+            max-height: 17mm;
             height: auto;
             margin-bottom: 6px;
             -webkit-print-color-adjust: exact;
@@ -194,8 +194,12 @@
             color: #475569;
         }
 
-        .footer {
+        .pie-hoja {
             margin-top: 22px;
+        }
+
+        .footer {
+            margin-top: 0;
             padding-top: 10px;
             border-top: 1px solid #e2e8f0;
             font-size: .82em;
@@ -205,7 +209,7 @@
         }
 
         .sign {
-            margin-top: 26px;
+            margin-top: 18px;
             width: 100%;
             border-collapse: collapse;
         }
@@ -249,6 +253,18 @@
 
             body { background: #fff; }
 
+            /* Anclado abajo: la hoja se ve terminada aunque la venta tenga
+               dos renglones, y el cliente firma siempre en el mismo sitio. */
+            .pie-hoja {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+            }
+
+            /* Espacio reservado para ese pie, para que nada se le encime. */
+            .contenido { padding-bottom: 42mm; }
+
             .sheet {
                 width: auto;
                 min-height: 0;
@@ -274,28 +290,31 @@
 
     <div class="sheet">
 
+        <div class="contenido">
+
         <table class="head">
             <tr>
                 <td>
                     @if ($logo)
+                        {{-- El logo ya lleva el nombre; repetirlo debajo lo duplica. --}}
                         <img class="logo" src="{{ $logo }}" alt="{{ $store['name'] }}">
+                    @else
+                        <div class="store-name upper">{{ $store['name'] }}</div>
                     @endif
-                    <div class="store-name upper">{{ $store['name'] }}</div>
-                    @if ($store['legal_name'])
-                        <div class="muted">{{ $store['legal_name'] }}</div>
-                    @endif
-                    @if ($store['nit'])
-                        <div class="muted">NIT: {{ $store['nit'] }}</div>
-                    @endif
-                    @if ($location)
-                        <div class="muted">{{ $location }}</div>
-                    @endif
-                    @if ($store['phone'])
-                        <div class="muted">Cel: {{ $store['phone'] }}</div>
-                    @endif
-                    @if ($store['email'])
-                        <div class="muted">{{ $store['email'] }}</div>
-                    @endif
+
+                    @php
+                        $datos = collect([
+                            $store['legal_name'],
+                            $store['nit'] ? 'NIT: '.$store['nit'] : null,
+                            $location,
+                            $store['phone'] ? 'Cel: '.$store['phone'] : null,
+                            $store['email'],
+                        ])->filter();
+                    @endphp
+
+                    @foreach ($datos as $dato)
+                        <div class="muted">{{ $dato }}</div>
+                    @endforeach
                 </td>
                 <td class="right" style="width:66mm">
                     <div class="doc-box">
@@ -379,21 +398,25 @@
             </table>
         </div>
 
-        <div class="footer">
+        </div>{{-- /contenido --}}
+
+        <div class="pie-hoja">
+            <div class="footer">
             @if ($store['receipt']['legal_note'])
                 <div>{{ $store['receipt']['legal_note'] }}</div>
             @endif
             @if ($store['receipt']['footer'])
                 <div class="bold" style="margin-top:4px">{{ $store['receipt']['footer'] }}</div>
             @endif
-        </div>
+            </div>
 
-        <table class="sign">
-            <tr>
-                <td><div class="line">Entregado por</div></td>
-                <td><div class="line">Recibido por</div></td>
-            </tr>
-        </table>
+            <table class="sign">
+                <tr>
+                    <td><div class="line">Entregado por</div></td>
+                    <td><div class="line">Recibido por</div></td>
+                </tr>
+            </table>
+        </div>
 
     </div>
 
