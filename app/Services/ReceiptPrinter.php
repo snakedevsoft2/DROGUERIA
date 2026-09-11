@@ -198,7 +198,7 @@ class ReceiptPrinter
     {
         $store = config('drogueria');
 
-        $printer->setJustification(Printer::JUSTIFY_CENTER);
+        $printer->setJustification(Printer::JUSTIFY_LEFT);
 
         if (! $this->logo($printer)) {
             $printer->setEmphasis(true);
@@ -224,7 +224,7 @@ class ReceiptPrinter
             $printer->text($this->wrap($value)."\n");
         }
 
-        $printer->text($this->rule());
+        $printer->feed();
         $printer->setEmphasis(true);
         $printer->text($this->wrap('COMPROBANTE DE VENTA')."\n");
         $printer->setEmphasis(false);
@@ -268,11 +268,11 @@ class ReceiptPrinter
     {
         $methods = ['cash' => 'EFECTIVO', 'card' => 'TARJETA', 'transfer' => 'TRANSFERENCIA'];
 
-        $printer->setJustification(Printer::JUSTIFY_CENTER);
+        $printer->setJustification(Printer::JUSTIFY_LEFT);
         $printer->text($sale->invoice_number."\n");
 
         $printer->setJustification(Printer::JUSTIFY_LEFT);
-        $printer->text($this->rule());
+        $printer->feed();
 
         $printer->text($this->columnsLine('Fecha:', $sale->created_at->format('d/m/Y H:i')));
         $printer->text($this->columnsLine(
@@ -287,7 +287,7 @@ class ReceiptPrinter
 
     protected function items(Printer $printer, Collection $lines): void
     {
-        $printer->text($this->rule());
+        $printer->feed();
 
         foreach ($lines as $line) {
             $name = $line->name;
@@ -311,14 +311,14 @@ class ReceiptPrinter
 
     protected function totals(Printer $printer, Sale $sale): void
     {
-        $printer->text($this->rule());
+        $printer->feed();
 
         // Sin descuento el subtotal repite el total: en un tiquete angosto
         // esa línea sólo gasta papel.
         if ((float) $sale->discount > 0) {
             $printer->text($this->columnsLine('Subtotal', $this->money($sale->subtotal)));
             $printer->text($this->columnsLine('Descuento', '-'.$this->money($sale->discount)));
-            $printer->text($this->rule('='));
+            $printer->feed();
         }
 
         // El total va a doble alto: es lo único que el cliente busca de lejos.
@@ -329,7 +329,7 @@ class ReceiptPrinter
         $printer->setTextSize(1, 1);
         $printer->setEmphasis(false);
 
-        $printer->text($this->rule('='));
+        $printer->feed();
 
         // Lo recibido sólo interesa cuando hay vuelto que contar.
         if ((float) $sale->change_amount > 0 || $sale->payment_method === 'cash') {
@@ -345,8 +345,8 @@ class ReceiptPrinter
     {
         $receipt = config('drogueria.receipt');
 
-        $printer->text($this->rule());
-        $printer->setJustification(Printer::JUSTIFY_CENTER);
+        $printer->feed();
+        $printer->setJustification(Printer::JUSTIFY_LEFT);
 
         $printer->text($this->wrap('Artículos: '.$lines->sum('quantity'))."\n");
 

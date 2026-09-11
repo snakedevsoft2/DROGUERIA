@@ -60,7 +60,7 @@
             width: {{ round($utilMm * 0.82, 1) }}mm;   /* deja aire a los lados del rollo */
             max-width: 100%;
             height: auto;
-            margin: 0 auto 4px;
+            margin: 0 0 4px;
             /* Que el navegador no lo aclare al imprimir. */
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
@@ -75,11 +75,8 @@
 
         .muted { font-size: .92em; }
 
-        .rule {
-            border: 0;
-            border-top: 1px dashed #000;
-            margin: 6px 0;
-        }
+        /* Bloques separados por aire, sin rayas de por medio. */
+        .bloque { margin-top: 3mm; }
 
         table {
             width: 100%;
@@ -96,7 +93,7 @@
 
         thead th {
             font-size: .92em;
-            border-bottom: 1px solid #000;
+            font-weight: 700;
             padding-bottom: 2px;
         }
 
@@ -121,9 +118,7 @@
         .grand td {
             font-size: 1.3em;
             font-weight: 700;
-            border-top: 1px solid #000;
-            border-bottom: 1px solid #000;
-            padding: 4px 0;
+            padding: 2mm 0 1mm;
         }
 
         .footer {
@@ -165,7 +160,7 @@
 </head>
 <body>
 
-    <div class="center">
+    <div>
         @if ($logo)
             {{-- El logo ya trae el nombre, así que sustituye al texto. --}}
             <img class="logo" src="{{ $logo }}" alt="{{ $store['name'] }}">
@@ -193,14 +188,12 @@
         @endif
     </div>
 
-    <hr class="rule">
 
-    <div class="bold center upper">Comprobante de venta</div>
-    <div class="center">{{ $sale->invoice_number }}</div>
+    <div class="bloque bold upper">Comprobante de venta</div>
+    <div>{{ $sale->invoice_number }}</div>
 
-    <hr class="rule">
 
-    <table>
+    <table class="bloque">
         <tr>
             <td>Fecha:</td>
             <td class="right">{{ $sale->created_at->format('d/m/Y H:i') }}</td>
@@ -217,9 +210,8 @@
         @endif
     </table>
 
-    <hr class="rule">
 
-    <table>
+    <table class="bloque">
         <thead>
             <tr>
                 <th class="col-qty">Cant</th>
@@ -243,7 +235,6 @@
         @endforeach
     </table>
 
-    <hr class="rule">
 
     @php
         // Sin descuento el subtotal es el total, y en tarjeta lo recibido
@@ -252,7 +243,7 @@
         $hayVuelto = (float) $sale->change_amount > 0 || $sale->payment_method === 'cash';
     @endphp
 
-    <table class="totals">
+    <table class="totals bloque">
         <colgroup>
             <col style="width:52%">
             <col style="width:48%">
@@ -286,9 +277,8 @@
         @endif
     </table>
 
-    <hr class="rule">
 
-    <div class="center footer">
+    <div class="footer">
         <div>Artículos: {{ $lines->sum('quantity') }}</div>
         @if ($store['receipt']['legal_note'])
             <div style="margin-top:4px">{{ $store['receipt']['legal_note'] }}</div>
