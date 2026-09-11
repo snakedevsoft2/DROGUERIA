@@ -4,8 +4,10 @@ namespace App\Livewire;
 
 use App\Models\Sale;
 use App\Models\SaleDetail;
+use App\Models\Setting;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -30,10 +32,112 @@ class ReportsComponent extends Component
 
     public ?int $expandedSaleId = null;
 
+    // --- Clave de acceso ---
+
+    /** Ajuste donde vive el hash de la clave. */
+    public const CLAVE = 'reports.password';
+
+    /** Clave de fábrica, para que la caja no quede encerrada el primer día. */
+    public const CLAVE_INICIAL = '1234';
+
+    public string $password = '';
+
+    public bool $showPasswordForm = false;
+
+    public string $current_password = '';
+
+    public string $new_password = '';
+
+    public string $new_password_confirmation = '';
+
     public function mount(): void
     {
         $this->from = $this->from ?: now()->toDateString();
         $this->to = $this->to ?: now()->toDateString();
+    }
+
+    /**
+     * Los reportes muestran cuánto vende el negocio, así que quedan detrás de
+     * una clave. Se desbloquean por sesión: el cajero la escribe una vez y
+     * puede consultar hasta que cierre el navegador.
+     */
+    #[Computed(persist: false)]
+    public function unlocked(): bool
+    {
+        return (bool) session('reports_unlocked', false);
+    }
+
+    /** Hash guardado; si nunca se cambió, el de la clave de fábrica. */
+    protected function storedHash(): string
+    {
+        $hash = Setting::get(self::CLAVE);
+
+        if (! $hash) {
+            $hash = Hash::make(self::CLAVE_INICIAL);
+            Setting::put(self::CLAVE, $hash);
+        }
+
+        return $hash;
+    }
+
+    public function unlock(): void
+    {
+        if (! Hash::check($this->password, $this->storedHash())) {
+            $this->password = '';
+            $this->addError('password', 'Clave incorrecta.');
+
+            return;
+        }
+
+        session(['reports_unlocked' => true]);
+
+        $this->password = '';
+        $this->resetValidation();
+        unset($this->unlocked);
+    }
+
+    public function lock(): void
+    {
+        session()->forget('reports_unlocked');
+
+        $this->showPasswordForm = false;
+        unset($this->unlocked);
+
+        $this->dispatch('toast', type: 'success', message: 'Reportes bloqueados.');
+    }
+
+    /** ¿Sigue puesta la clave de fábrica? Se avisa hasta que la cambien. */
+    #[Computed(persist: false)]
+    public function usingDefaultPassword(): bool
+    {
+        return Hash::check(self::CLAVE_INICIAL, $this->storedHash());
+    }
+
+    public function changePassword(): void
+    {
+        $this->validate([
+            'current_password' => ['required'],
+            'new_password' => ['required', 'string', 'min:4', 'max:64', 'confirmed'],
+        ], [
+            'current_password.required' => 'Escriba la clave actual.',
+            'new_password.required' => 'Escriba la clave nueva.',
+            'new_password.min' => 'La clave nueva debe tener al menos 4 caracteres.',
+            'new_password.confirmed' => 'La confirmación no coincide con la clave nueva.',
+        ]);
+
+        if (! Hash::check($this->current_password, $this->storedHash())) {
+            $this->addError('current_password', 'La clave actual no es correcta.');
+
+            return;
+        }
+
+        Setting::put(self::CLAVE, Hash::make($this->new_password));
+
+        $this->reset(['current_password', 'new_password', 'new_password_confirmation']);
+        $this->showPasswordForm = false;
+        unset($this->usingDefaultPassword);
+
+        $this->dispatch('toast', type: 'success', message: 'Clave actualizada.');
     }
 
     public function render()

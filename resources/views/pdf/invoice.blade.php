@@ -1,6 +1,15 @@
 @php
     $store = config('drogueria');
-    $width = $store['receipt']['width'] ?? '80mm';
+    $width = $store['receipt']['width'] ?? '58mm';
+
+    // La vista previa debe caer en las mismas columnas que imprime la
+    // tiquetera. Se despeja del ancho del rollo: descontados los márgenes,
+    // cada carácter mide (ancho útil / columnas), y en una monoespaciada el
+    // carácter ocupa 0,6 del tamaño de letra.
+    $margen = 2.5;                                          // mm a cada lado
+    $columnas = max(24, (int) ($store['printer']['columns'] ?? 35));
+    $utilMm = max(20, (float) filter_var($width, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION) - 2 * $margen);
+    $fuenteMm = round($utilMm / $columnas / 0.6, 3);
 
     $methods = ['cash' => 'EFECTIVO', 'card' => 'TARJETA', 'transfer' => 'TRANSFERENCIA'];
 
@@ -28,15 +37,15 @@
 
         body {
             margin: 0;
-            padding: 4mm 2.5mm;
+            padding: 4mm {{ $margen }}mm;
             width: {{ $width }};
             background: #fff;
             color: #000;
             /* Monoespaciada: las columnas de precios quedan alineadas. */
             font-family: 'Consolas', 'DejaVu Sans Mono', 'Courier New', monospace;
             /* En mm y no en px: así la tirilla en pantalla cae en las mismas
-               48 columnas por línea que imprime la tiquetera de 80mm. */
-            font-size: 2.5mm;
+               {{ $columnas }} columnas por línea que imprime la tiquetera. */
+            font-size: {{ $fuenteMm }}mm;
             line-height: 1.3;
             -webkit-font-smoothing: none;
         }
@@ -48,7 +57,7 @@
 
         .logo {
             display: block;
-            width: 60mm;      /* el rollo útil son ~72mm; deja aire a los lados */
+            width: {{ round($utilMm * 0.82, 1) }}mm;   /* deja aire a los lados del rollo */
             max-width: 100%;
             height: auto;
             margin: 0 auto 4px;
@@ -151,7 +160,7 @@
 
         @media print {
             .no-print { display: none !important; }
-            body { padding: 0 2.5mm; }
+            body { padding: 0 {{ $margen }}mm; }
         }
     </style>
 </head>

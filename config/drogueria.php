@@ -67,9 +67,10 @@ return [
         // códigos, necesarias para las tildes y la ñ.
         'profile' => env('PRINTER_PROFILE', 'default'),
 
-        // Caracteres por línea en fuente A. La tiquetera en uso da 48 en rollo
-        // de 80mm; otras Epson dan 42, y en 58mm son 32.
-        'columns' => (int) env('PRINTER_COLUMNS', 48),
+        // Caracteres por línea en fuente A. Depende del rollo y del modelo:
+        // en 58mm suelen ser 32-35 y en 80mm, 42-48. Si el tiquete sale
+        // partido a media línea, el número está por encima del real.
+        'columns' => (int) env('PRINTER_COLUMNS', 35),
 
         // Imprime al confirmar la venta, sin que el cajero tenga que pulsar
         // nada. La vista previa se sigue mostrando para reimprimir.
@@ -117,7 +118,7 @@ return [
 
     'receipt' => [
         // Ancho del rollo: 80mm o 58mm.
-        'width' => env('RECEIPT_WIDTH', '80mm'),
+        'width' => env('RECEIPT_WIDTH', '58mm'),
 
         'footer' => env('RECEIPT_FOOTER', '¡Gracias por su compra!'),
 

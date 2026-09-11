@@ -92,6 +92,8 @@ class ReportesTest extends TestCase
         $product->delete();
 
         Livewire::test(ReportsComponent::class)
+            ->set('password', '1234')     // los reportes van bajo clave
+            ->call('unlock')
             ->call('toggleSale', $sale->id)
             ->assertSee('Producto retirado');
     }
