@@ -4,6 +4,8 @@ namespace App\Livewire;
 
 use App\Models\Batch;
 use App\Models\Product;
+use App\Models\SaleDetail;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -11,6 +13,7 @@ use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Throwable;
 
 #[Layout('components.layouts.app')]
 #[Title('Inventario')]
@@ -243,7 +246,27 @@ class InventoryComponent extends Component
         // Se borra de verdad, con sus lotes. Las ventas ya registradas no se
         // tocan: el detalle guarda el nombre y suelta la referencia, así que
         // los comprobantes y los reportes siguen cuadrando.
-        $product->delete();
+        try {
+            DB::transaction(function () use ($product) {
+                $batchIds = $product->batches()->pluck('id');
+
+                SaleDetail::whereIn('batch_id', $batchIds)->update(['batch_id' => null]);
+
+                // El nombre se copia antes de soltar la referencia: de ahí lo
+                // leen las facturas viejas cuando el producto ya no está.
+                SaleDetail::where('product_id', $product->id)
+                    ->whereNull('product_name')
+                    ->update(['product_name' => $product->name]);
+
+                SaleDetail::where('product_id', $product->id)->update(['product_id' => null]);
+
+                $product->delete();
+            });
+        } catch (Throwable $e) {
+            $this->dispatch('toast', type: 'error', message: 'No se pudo eliminar el producto: '.$e->getMessage());
+
+            return;
+        }
 
         unset($this->products, $this->lowStockCount, $this->expiringCount, $this->expiredCount);
 
@@ -312,7 +335,26 @@ class InventoryComponent extends Component
 
     public function deleteBatch(int $id): void
     {
-        Batch::where('id', $id)->delete();
+        $batch = Batch::find($id);
+
+        if (! $batch) {
+            return;
+        }
+
+        // Las ventas anotan de qué lote salió cada unidad. Al borrarlo esa
+        // referencia se suelta y la venta queda igual: mismo producto, mismas
+        // cantidades, mismo total.
+        try {
+            DB::transaction(function () use ($batch) {
+                SaleDetail::where('batch_id', $batch->id)->update(['batch_id' => null]);
+
+                $batch->delete();
+            });
+        } catch (Throwable $e) {
+            $this->dispatch('toast', type: 'error', message: 'No se pudo eliminar el lote: '.$e->getMessage());
+
+            return;
+        }
 
         unset($this->products, $this->lowStockCount, $this->expiringCount, $this->expiredCount);
 
