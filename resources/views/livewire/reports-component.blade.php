@@ -1,30 +1,4 @@
 <div class="p-6">
-    @if (! $this->unlocked)
-        {{-- Los reportes muestran lo que vende el negocio: van bajo clave. --}}
-        <div class="max-w-sm mx-auto mt-16 bg-white rounded-2xl shadow-sm border border-slate-200 p-8 text-center">
-            <div class="w-14 h-14 mx-auto mb-4 rounded-full bg-slate-100 flex items-center justify-center text-3xl">&#128274;</div>
-
-            <h1 class="text-xl font-extrabold text-slate-900">Reportes protegidos</h1>
-            <p class="text-sm text-slate-500 mt-1 mb-6">Escriba la clave para ver las ventas del negocio.</p>
-
-            <form wire:submit="unlock" class="flex flex-col gap-3">
-                <input
-                    type="password"
-                    wire:model="password"
-                    autofocus
-                    placeholder="Clave"
-                    class="w-full px-4 py-3 text-center tracking-widest bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none"
-                >
-                @error('password') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
-
-                <button type="submit" class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition">
-                    Entrar
-                </button>
-            </form>
-
-            <a href="{{ route('pos') }}" class="inline-block mt-4 text-xs font-semibold text-slate-400 hover:text-slate-600">Volver al punto de venta</a>
-        </div>
-    @else
     <div class="max-w-7xl mx-auto flex flex-col gap-6">
 
         <div class="flex flex-wrap justify-between items-start gap-3">
@@ -35,17 +9,14 @@
 
             <div class="flex items-center gap-2">
                 <button type="button" wire:click="$toggle('showPasswordForm')" class="px-3 py-2 rounded-xl border border-slate-300 text-slate-600 text-sm font-semibold hover:bg-white transition">
-                    Cambiar clave
-                </button>
-                <button type="button" wire:click="lock" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-sm font-semibold transition">
-                    Bloquear
+                    Clave para eliminar
                 </button>
             </div>
         </div>
 
         @if ($this->usingDefaultPassword)
             <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-2xl px-4 py-3 text-sm">
-                Los reportes están con la clave de fábrica (<strong>1234</strong>). Cámbiela para que nadie más vea las ventas.
+La clave para borrar inventario es la de fábrica (<strong>1234</strong>). Cámbiela para que nadie más pueda eliminar productos ni lotes.
             </div>
         @endif
 
@@ -301,5 +272,4 @@
             @endif
         </div>
     </div>
-    @endif
 </div>

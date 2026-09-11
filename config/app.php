@@ -65,7 +65,9 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    // Hora de Colombia: en el servidor de Vercel el reloj va en UTC y las
+    // ventas quedaban con cinco horas de más en la factura.
+    'timezone' => env('APP_TIMEZONE', 'America/Bogota'),
 
     /*
     |--------------------------------------------------------------------------

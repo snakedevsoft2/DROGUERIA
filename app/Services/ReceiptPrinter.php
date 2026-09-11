@@ -124,7 +124,7 @@ class ReceiptPrinter
 
             $printer->feed(2);
             $printer->setJustification(Printer::JUSTIFY_CENTER);
-            $printer->text("Si lee esto, la impresora quedó lista.\n");
+            $printer->text($this->wrap('Si lee esto, la impresora quedó lista.').PHP_EOL);
 
             if (config('drogueria.printer.cut')) {
                 $printer->cut();
@@ -296,12 +296,14 @@ class ReceiptPrinter
                 $name .= " ({$line->presentation})";
             }
 
-            // El nombre ocupa sus propias líneas: en 42 columnas no cabe
-            // junto a cantidad, precio y total sin quedar recortado.
+            // El nombre ocupa sus propias líneas: en un rollo angosto no cabe
+            // junto a la cantidad y el total sin quedar recortado.
             $printer->text($this->wrap($name)."\n");
 
+            // Sólo cantidad y total: el precio unitario repite la cifra en
+            // los renglones de una unidad y estorba en un rollo angosto.
             $printer->text($this->columnsLine(
-                '  '.$line->quantity.' x '.$this->money($line->unit_price),
+                '  '.$line->quantity,
                 $this->money($line->subtotal)
             ));
         }
@@ -311,13 +313,13 @@ class ReceiptPrinter
     {
         $printer->text($this->rule());
 
-        $printer->text($this->columnsLine('Subtotal', $this->money($sale->subtotal)));
-
+        // Sin descuento el subtotal repite el total: en un tiquete angosto
+        // esa línea sólo gasta papel.
         if ((float) $sale->discount > 0) {
+            $printer->text($this->columnsLine('Subtotal', $this->money($sale->subtotal)));
             $printer->text($this->columnsLine('Descuento', '-'.$this->money($sale->discount)));
+            $printer->text($this->rule('='));
         }
-
-        $printer->text($this->rule('='));
 
         // El total va a doble alto: es lo único que el cliente busca de lejos.
         // A doble ancho no cabría la cifra, así que sólo se estira en vertical.
@@ -329,11 +331,14 @@ class ReceiptPrinter
 
         $printer->text($this->rule('='));
 
-        $printer->text($this->columnsLine('Recibido', $this->money($sale->paid_amount)));
+        // Lo recibido sólo interesa cuando hay vuelto que contar.
+        if ((float) $sale->change_amount > 0 || $sale->payment_method === 'cash') {
+            $printer->text($this->columnsLine('Recibido', $this->money($sale->paid_amount)));
 
-        $printer->setEmphasis(true);
-        $printer->text($this->columnsLine('Cambio', $this->money($sale->change_amount)));
-        $printer->setEmphasis(false);
+            $printer->setEmphasis(true);
+            $printer->text($this->columnsLine('Cambio', $this->money($sale->change_amount)));
+            $printer->setEmphasis(false);
+        }
     }
 
     protected function footer(Printer $printer, Sale $sale, Collection $lines): void

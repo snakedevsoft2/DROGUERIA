@@ -169,8 +169,7 @@
                                                 >{{ $batch->is_active ? 'desactivar' : 'activar' }}</button>
                                                 <button
                                                     type="button"
-                                                    wire:click="deleteBatch({{ $batch->id }})"
-                                                    wire:confirm="¿Eliminar el lote {{ $batch->batch_number }}? Se borra definitivamente."
+                                                    wire:click="confirmDeleteBatch({{ $batch->id }})"
                                                     class="text-red-400 hover:text-red-600 font-semibold"
                                                 >eliminar</button>
                                             </div>
@@ -355,21 +354,51 @@
         </div>
     @endif
 
-    {{-- Confirmación de eliminación --}}
-    @if ($confirmingProductId)
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div class="absolute inset-0 bg-slate-900/50" wire:click="$set('confirmingProductId', null)"></div>
+    {{-- Confirmación de eliminación: borrar es lo único irreversible, así que
+         pide la clave del dueño. --}}
+    @if ($confirmingProductId || $confirmingBatchId)
+        @php
+            $loteABorrar = $confirmingBatchId ? \App\Models\Batch::find($confirmingBatchId) : null;
+            $productoABorrar = $confirmingProductId ? \App\Models\Product::find($confirmingProductId) : null;
+        @endphp
 
-            <div class="relative bg-white w-full max-w-sm rounded-2xl shadow-2xl p-6 text-center">
-                <h3 class="font-bold text-slate-800 mb-2">¿Eliminar este producto?</h3>
-                <p class="text-sm text-slate-500 mb-6">
-                    Se borrará el producto junto con todos sus lotes. Las ventas ya registradas no se modifican: siguen mostrando el nombre con el que se vendió.
-                </p>
-                <div class="flex gap-3">
-                    <button type="button" wire:click="$set('confirmingProductId', null)" class="flex-1 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-semibold hover:bg-slate-50 transition">Cancelar</button>
-                    <button type="button" wire:click="deleteProduct" class="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold transition">Eliminar</button>
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div class="absolute inset-0 bg-slate-900/50" wire:click="cancelDelete"></div>
+
+            <form
+                wire:submit="{{ $confirmingBatchId ? 'deleteBatch' : 'deleteProduct' }}"
+                class="relative bg-white w-full max-w-sm rounded-2xl shadow-2xl p-6 text-center"
+            >
+                <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-red-50 flex items-center justify-center text-2xl">&#9888;</div>
+
+                @if ($confirmingBatchId)
+                    <h3 class="font-bold text-slate-800 mb-2">¿Eliminar el lote {{ $loteABorrar?->batch_number }}?</h3>
+                    <p class="text-sm text-slate-500 mb-5">
+                        Se borran las {{ $loteABorrar?->stock }} unidades de este lote. Las ventas ya registradas no se modifican.
+                    </p>
+                @else
+                    <h3 class="font-bold text-slate-800 mb-2">¿Eliminar {{ $productoABorrar?->name }}?</h3>
+                    <p class="text-sm text-slate-500 mb-5">
+                        Se borrará el producto junto con todos sus lotes. Las ventas ya registradas no se modifican: siguen mostrando el nombre con el que se vendió.
+                    </p>
+                @endif
+
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 text-left">Clave para eliminar</label>
+                <input
+                    type="password"
+                    wire:model="deletePassword"
+                    autofocus
+                    class="w-full px-3 py-2.5 mb-1 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-sm text-center tracking-widest"
+                >
+                @error('deletePassword') <p class="text-xs text-red-600 mb-2 text-left">{{ $message }}</p> @enderror
+
+                <div class="flex gap-3 mt-4">
+                    <button type="button" wire:click="cancelDelete" class="flex-1 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-semibold hover:bg-slate-50 transition">Cancelar</button>
+                    <button type="submit" class="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold transition">Eliminar</button>
                 </div>
-            </div>
+
+                <p class="text-[11px] text-slate-400 mt-3">La clave se cambia desde Reportes.</p>
+            </form>
         </div>
     @endif
 </div>

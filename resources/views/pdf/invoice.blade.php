@@ -100,9 +100,8 @@
             padding-bottom: 2px;
         }
 
-        .col-qty   { width: 18%; }
-        .col-price { width: 40%; }
-        .col-total { width: 42%; }
+        .col-qty   { width: 25%; }
+        .col-total { width: 75%; }
 
         /* Cada producto (nombre + cifras) viaja junto y no se parte entre
            páginas ni entre hojas del rollo. */
@@ -115,7 +114,7 @@
         }
 
         /* Las cifras nunca se parten: si no caben, encogen el nombre. */
-        .col-qty, .col-price, .col-total { white-space: nowrap; }
+        .col-qty, .col-total { white-space: nowrap; }
 
         .totals td { padding: 1px 0; }
 
@@ -224,7 +223,6 @@
         <thead>
             <tr>
                 <th class="col-qty">Cant</th>
-                <th class="col-price right">Precio</th>
                 <th class="col-total right">Total</th>
             </tr>
         </thead>
@@ -233,13 +231,12 @@
             <tbody class="item">
                 {{-- Nombre en su propia fila: en 80mm no cabe junto a las cifras. --}}
                 <tr>
-                    <td colspan="3" class="item-name">
+                    <td colspan="2" class="item-name">
                         {{ $line->name }}@if ($line->presentation) <span class="muted">({{ $line->presentation }})</span>@endif
                     </td>
                 </tr>
                 <tr>
                     <td class="col-qty">{{ $line->quantity }}</td>
-                    <td class="col-price right">{{ $money($line->unit_price) }}</td>
                     <td class="col-total right bold">{{ $money($line->subtotal) }}</td>
                 </tr>
             </tbody>
@@ -248,17 +245,24 @@
 
     <hr class="rule">
 
+    @php
+        // Sin descuento el subtotal es el total, y en tarjeta lo recibido
+        // también: repetir la misma cifra tres veces sólo estorba.
+        $hayDescuento = (float) $sale->discount > 0;
+        $hayVuelto = (float) $sale->change_amount > 0 || $sale->payment_method === 'cash';
+    @endphp
+
     <table class="totals">
         <colgroup>
             <col style="width:52%">
             <col style="width:48%">
         </colgroup>
-        <tr>
-            <td>Subtotal</td>
-            <td class="right">{{ $money($sale->subtotal) }}</td>
-        </tr>
 
-        @if ((float) $sale->discount > 0)
+        @if ($hayDescuento)
+            <tr>
+                <td>Subtotal</td>
+                <td class="right">{{ $money($sale->subtotal) }}</td>
+            </tr>
             <tr>
                 <td>Descuento</td>
                 <td class="right">-{{ $money($sale->discount) }}</td>
@@ -270,14 +274,16 @@
             <td class="right">{{ $money($sale->total) }}</td>
         </tr>
 
-        <tr>
-            <td style="padding-top:4px">Recibido</td>
-            <td class="right" style="padding-top:4px">{{ $money($sale->paid_amount) }}</td>
-        </tr>
-        <tr>
-            <td class="bold">Cambio</td>
-            <td class="right bold">{{ $money($sale->change_amount) }}</td>
-        </tr>
+        @if ($hayVuelto)
+            <tr>
+                <td style="padding-top:4px">Recibido</td>
+                <td class="right" style="padding-top:4px">{{ $money($sale->paid_amount) }}</td>
+            </tr>
+            <tr>
+                <td class="bold">Cambio</td>
+                <td class="right bold">{{ $money($sale->change_amount) }}</td>
+            </tr>
+        @endif
     </table>
 
     <hr class="rule">

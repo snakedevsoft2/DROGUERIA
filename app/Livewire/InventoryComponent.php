@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Batch;
 use App\Models\Product;
 use App\Models\SaleDetail;
+use App\Support\AdminPassword;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
@@ -327,15 +328,61 @@ class InventoryComponent extends Component
             : 'Producto desactivado: deja de aparecer en el punto de venta.');
     }
 
+    // --- Borrado con clave ---
+
+    /** Lote en espera de confirmación, si lo que se borra es un lote. */
+    public ?int $confirmingBatchId = null;
+
+    public string $deletePassword = '';
+
     public function confirmDelete(int $id): void
     {
+        $this->confirmingBatchId = null;
         $this->confirmingProductId = $id;
+        $this->deletePassword = '';
+        $this->resetValidation();
+    }
+
+    public function confirmDeleteBatch(int $id): void
+    {
+        $this->confirmingProductId = null;
+        $this->confirmingBatchId = $id;
+        $this->deletePassword = '';
+        $this->resetValidation();
+    }
+
+    public function cancelDelete(): void
+    {
+        $this->confirmingProductId = null;
+        $this->confirmingBatchId = null;
+        $this->deletePassword = '';
+        $this->resetValidation();
+    }
+
+    /**
+     * Borrar es lo único que no tiene vuelta atrás, así que pide la clave del
+     * dueño. Vender y consultar no la necesitan.
+     */
+    protected function authorizeDelete(): bool
+    {
+        if (AdminPassword::check($this->deletePassword)) {
+            return true;
+        }
+
+        $this->addError('deletePassword', 'Clave incorrecta.');
+        $this->deletePassword = '';
+
+        return false;
     }
 
     public function deleteProduct(): void
     {
+        if (! $this->authorizeDelete()) {
+            return;
+        }
+
         $product = Product::find($this->confirmingProductId);
-        $this->confirmingProductId = null;
+        $this->cancelDelete();
 
         if (! $product) {
             return;
@@ -453,9 +500,14 @@ class InventoryComponent extends Component
             : 'Lote desactivado: su stock ya no se vende.');
     }
 
-    public function deleteBatch(int $id): void
+    public function deleteBatch(): void
     {
-        $batch = Batch::find($id);
+        if (! $this->authorizeDelete()) {
+            return;
+        }
+
+        $batch = Batch::find($this->confirmingBatchId);
+        $this->cancelDelete();
 
         if (! $batch) {
             return;

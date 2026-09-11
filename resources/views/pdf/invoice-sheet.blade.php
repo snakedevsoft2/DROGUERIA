@@ -126,9 +126,8 @@
         .items tr { page-break-inside: avoid; break-inside: avoid; }
 
         .c-item  { width: 9%;  text-align: right; padding-left: 7mm !important; }
-        .c-name  { width: 45%; word-break: break-word; overflow-wrap: anywhere; }
-        .c-qty   { width: 10%; text-align: right; white-space: nowrap; }
-        .c-price { width: 18%; text-align: right; white-space: nowrap; }
+        .c-name  { width: 61%; word-break: break-word; overflow-wrap: anywhere; }
+        .c-qty   { width: 12%; text-align: right; white-space: nowrap; }
         .c-total { width: 18%; text-align: right; white-space: nowrap; padding-right: 7mm !important; }
 
         .presentation {
@@ -303,7 +302,6 @@
                         <th class="c-item">N.º</th>
                         <th class="c-name">Descripción</th>
                         <th class="c-qty">Cant.</th>
-                        <th class="c-price">V. unitario</th>
                         <th class="c-total">Valor</th>
                     </tr>
                 </thead>
@@ -318,7 +316,6 @@
                                 @endif
                             </td>
                             <td class="c-qty">{{ $line->quantity }}</td>
-                            <td class="c-price">{{ $money($line->unit_price) }}</td>
                             <td class="c-total">{{ $money($line->subtotal) }}</td>
                         </tr>
                     @endforeach
@@ -326,13 +323,19 @@
             </table>
 
             <div class="totales">
-                <table>
-                    <tr>
-                        <td>Subtotal</td>
-                        <td class="valor">{{ $money($sale->subtotal) }}</td>
-                    </tr>
+                @php
+                    // Una sola cifra grande: el subtotal sólo aparece si hubo
+                    // descuento, y lo recibido sólo cuando hay vuelto que dar.
+                    $hayDescuento = (float) $sale->discount > 0;
+                    $hayVuelto = (float) $sale->change_amount > 0 || $sale->payment_method === 'cash';
+                @endphp
 
-                    @if ((float) $sale->discount > 0)
+                <table>
+                    @if ($hayDescuento)
+                        <tr>
+                            <td>Subtotal</td>
+                            <td class="valor">{{ $money($sale->subtotal) }}</td>
+                        </tr>
                         <tr>
                             <td>Descuento</td>
                             <td class="valor">-{{ $money($sale->discount) }}</td>
@@ -344,14 +347,16 @@
                         <td class="valor">{{ $money($sale->total) }}</td>
                     </tr>
 
-                    <tr class="entrega">
-                        <td>Recibido</td>
-                        <td class="valor">{{ $money($sale->paid_amount) }}</td>
-                    </tr>
-                    <tr>
-                        <td class="bold">Cambio</td>
-                        <td class="valor bold">{{ $money($sale->change_amount) }}</td>
-                    </tr>
+                    @if ($hayVuelto)
+                        <tr class="entrega">
+                            <td>Recibido</td>
+                            <td class="valor">{{ $money($sale->paid_amount) }}</td>
+                        </tr>
+                        <tr>
+                            <td class="bold">Cambio</td>
+                            <td class="valor bold">{{ $money($sale->change_amount) }}</td>
+                        </tr>
+                    @endif
                 </table>
             </div>
 

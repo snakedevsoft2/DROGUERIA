@@ -69,6 +69,7 @@ class InventarioTest extends TestCase
 
         Livewire::test(InventoryComponent::class)
             ->call('confirmDelete', $product->id)
+            ->set('deletePassword', '1234')
             ->call('deleteProduct');
 
         $this->assertNull(Product::find($product->id));
@@ -83,6 +84,7 @@ class InventarioTest extends TestCase
 
         Livewire::test(InventoryComponent::class)
             ->call('confirmDelete', $product->id)
+            ->set('deletePassword', '1234')
             ->call('deleteProduct');
 
         $this->assertNull(Product::find($product->id));
@@ -99,7 +101,10 @@ class InventarioTest extends TestCase
         $batch = $this->lote($product);
         $sale = $this->venta($product, $batch);
 
-        Livewire::test(InventoryComponent::class)->call('deleteBatch', $batch->id);
+        Livewire::test(InventoryComponent::class)
+            ->call('confirmDeleteBatch', $batch->id)
+            ->set('deletePassword', '1234')
+            ->call('deleteBatch');
 
         $this->assertNull(Batch::find($batch->id));
 
@@ -163,6 +168,7 @@ class InventarioTest extends TestCase
     {
         Livewire::test(InventoryComponent::class)
             ->call('confirmDelete', 9999)
+            ->set('deletePassword', '1234')
             ->call('deleteProduct')
             ->assertOk();
     }
