@@ -234,6 +234,50 @@ namespace Drogueria
         private readonly TrabajoWindows _trabajo = new TrabajoWindows();
         private Process _proceso;
 
+        /// <summary>
+        /// Deja constancia de cada arranque en ultimo-arranque.log.
+        ///
+        /// Cuando el programa no abre en el equipo del cliente no hay nadie
+        /// a quien preguntar ni forma de ver qué intentó. Este registro es
+        /// lo que se mira primero: qué puerto probó, qué dijo PHP y cuánto
+        /// tardó cada intento.
+        /// </summary>
+        private void Apuntar(string texto)
+        {
+            try
+            {
+                string archivo = Path.Combine(_carpetaBase, "ultimo-arranque.log");
+
+                File.AppendAllText(archivo,
+                    DateTime.Now.ToString("HH:mm:ss.fff") + "  " + texto + Environment.NewLine);
+            }
+            catch
+            {
+                // Si no se puede escribir el registro, el programa tiene que
+                // seguir intentando abrir igual.
+            }
+        }
+
+        /// <summary>Empieza un registro limpio en cada arranque.</summary>
+        public void EmpezarRegistro()
+        {
+            try
+            {
+                string archivo = Path.Combine(_carpetaBase, "ultimo-arranque.log");
+
+                File.WriteAllText(archivo,
+                    "Arranque del " + DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss") + Environment.NewLine +
+                    "Carpeta: " + _carpetaBase + Environment.NewLine +
+                    "Puerto configurado: " + Puerto + Environment.NewLine +
+                    "Usuario: " + Environment.UserName +
+                    "   Carpeta de trabajo: " + Directory.GetCurrentDirectory() + Environment.NewLine +
+                    new string('-', 60) + Environment.NewLine);
+            }
+            catch
+            {
+            }
+        }
+
         public int Puerto { get; private set; }
 
         public string Url
@@ -401,21 +445,32 @@ namespace Drogueria
 
             int primero = Puerto;
 
+            EmpezarRegistro();
+
             if (Responde())
             {
+                Apuntar("Ya había un servidor respondiendo en " + Puerto + ": se reutiliza.");
                 return;
             }
 
             // Un servidor huérfano de una sesión que no se cerró bien sigue
             // agarrado al puerto. Si hay algo ahí que no contesta como el
             // punto de venta, se limpia antes de empezar.
-            if (PuertoOcupado() && LimpiarHuerfanos() > 0)
+            if (PuertoOcupado())
             {
-                System.Threading.Thread.Sleep(1000);
+                Apuntar("Hay algo en el puerto " + Puerto + " que no responde como el punto de venta.");
 
-                if (Responde())
+                int muertos = LimpiarHuerfanos();
+                Apuntar("Procesos huérfanos de esta carpeta eliminados: " + muertos);
+
+                if (muertos > 0)
                 {
-                    return;
+                    System.Threading.Thread.Sleep(1000);
+
+                    if (Responde())
+                    {
+                        return;
+                    }
                 }
             }
 
@@ -431,18 +486,25 @@ namespace Drogueria
                 for (int intento = 1; intento <= intentosPorPuerto; intento++)
                 {
                     ReiniciarSalida();
+
+                    Apuntar("Lanzando PHP en el puerto " + Puerto + " (intento " + intento + ")...");
                     LanzarProceso();
 
                     if (!MurioAlArrancar())
                     {
+                        Apuntar("PHP sigue vivo: se da por arrancado en el puerto " + Puerto + ".");
                         return;
                     }
+
+                    Apuntar("PHP murió. Dijo esto:");
+                    Apuntar("    " + Salida.Replace(Environment.NewLine, " | ").Trim());
 
                     // Si no fue por el puerto, cambiar de puerto no arregla
                     // nada: el error real está en la salida y hay que
                     // enseñarlo tal cual.
                     if (!SeQuejoDelPuerto())
                     {
+                        Apuntar("No se quejó del puerto: no tiene sentido probar otro.");
                         return;
                     }
 
@@ -450,10 +512,13 @@ namespace Drogueria
                     // no lo había soltado del todo, un respiro basta.
                     if (intento < intentosPorPuerto)
                     {
+                        Apuntar("Se queja del puerto. Espero y repito en el mismo.");
                         System.Threading.Thread.Sleep(1500);
                     }
                 }
             }
+
+            Apuntar("Agotados los " + cuantosPuertos + " puertos desde el " + primero + ".");
 
             // Agotados todos: se deja el puerto original en el mensaje, que
             // es el que el usuario reconoce.

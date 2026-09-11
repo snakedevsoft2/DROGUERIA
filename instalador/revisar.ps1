@@ -200,7 +200,9 @@ $esperados = @(
     'scripts\herramientas\respaldar.ps1',
     'scripts\herramientas\datos-ejemplo.ps1',
     'scripts\herramientas\cerrar.ps1',
-    'scripts\herramientas\diagnostico.ps1'
+    'scripts\herramientas\diagnostico.ps1',
+    'scripts\herramientas\comprobar.ps1',
+    'scripts\Comprobar instalacion.bat'
 )
 
 foreach ($e in $esperados) {
