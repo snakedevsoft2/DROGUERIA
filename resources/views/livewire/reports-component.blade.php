@@ -203,7 +203,7 @@
                                             <tbody class="text-slate-600">
                                                 @foreach ($sale->details as $detail)
                                                     <tr wire:key="detail-{{ $detail->id }}" class="border-t border-slate-200">
-                                                        <td class="py-2">{{ $detail->product?->name ?? 'Producto eliminado' }}</td>
+                                                        <td class="py-2">{{ $detail->product?->name ?? $detail->product_name ?? 'Producto eliminado' }}</td>
                                                         <td class="py-2">{{ $detail->batch?->batch_number ?? '—' }}</td>
                                                         <td class="py-2 text-center">{{ $detail->quantity }}</td>
                                                         <td class="py-2 text-right">${{ number_format($detail->unit_price, 2) }}</td>

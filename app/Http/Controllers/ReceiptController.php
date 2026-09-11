@@ -53,7 +53,9 @@ class ReceiptController extends Controller
         return $sale->details
             ->groupBy(fn ($detail) => $detail->product_id.'-'.$detail->unit_price)
             ->map(fn ($group) => (object) [
-                'name' => $group->first()->product?->name ?? 'Producto eliminado',
+                'name' => $group->first()->product?->name
+                    ?? $group->first()->product_name
+                    ?? 'Producto eliminado',
                 'presentation' => $group->first()->product?->presentation,
                 'unit_price' => (float) $group->first()->unit_price,
                 'quantity' => (int) $group->sum('quantity'),

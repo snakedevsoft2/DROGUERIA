@@ -420,6 +420,9 @@ class PosComponent extends Component
             SaleDetail::create([
                 'sale_id' => $sale->id,
                 'product_id' => $item['id'],
+                // Copia del nombre: el comprobante se sigue leyendo aunque el
+                // producto se borre después del catálogo.
+                'product_name' => $item['name'],
                 'batch_id' => $batch->id,
                 'quantity' => $deduct,
                 'unit_price' => $item['unit_price'],

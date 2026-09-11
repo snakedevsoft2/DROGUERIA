@@ -233,26 +233,21 @@ class InventoryComponent extends Component
 
     public function deleteProduct(): void
     {
-        $product = Product::withCount('batches')->find($this->confirmingProductId);
+        $product = Product::find($this->confirmingProductId);
         $this->confirmingProductId = null;
 
         if (! $product) {
             return;
         }
 
-        // Sale details reference products, so a product that has ever moved
-        // stock is deactivated rather than deleted.
-        if ($product->batches_count > 0) {
-            $product->update(['is_active' => false]);
-            $message = 'El producto tiene lotes registrados: fue desactivado en lugar de eliminarse.';
-        } else {
-            $product->delete();
-            $message = 'Producto eliminado.';
-        }
+        // Se borra de verdad, con sus lotes. Las ventas ya registradas no se
+        // tocan: el detalle guarda el nombre y suelta la referencia, así que
+        // los comprobantes y los reportes siguen cuadrando.
+        $product->delete();
 
-        unset($this->products, $this->lowStockCount);
+        unset($this->products, $this->lowStockCount, $this->expiringCount, $this->expiredCount);
 
-        $this->dispatch('toast', type: 'success', message: $message);
+        $this->dispatch('toast', type: 'success', message: 'Producto eliminado.');
     }
 
     protected function resetProductForm(): void

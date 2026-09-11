@@ -314,7 +314,7 @@
             <div class="relative bg-white w-full max-w-sm rounded-2xl shadow-2xl p-6 text-center">
                 <h3 class="font-bold text-slate-800 mb-2">¿Eliminar este producto?</h3>
                 <p class="text-sm text-slate-500 mb-6">
-                    Si el producto tiene lotes registrados se desactivará en lugar de borrarse, para conservar el historial de ventas.
+                    Se borrará el producto junto con todos sus lotes. Las ventas ya registradas no se modifican: siguen mostrando el nombre con el que se vendió.
                 </p>
                 <div class="flex gap-3">
                     <button type="button" wire:click="$set('confirmingProductId', null)" class="flex-1 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-semibold hover:bg-slate-50 transition">Cancelar</button>
