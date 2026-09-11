@@ -93,12 +93,49 @@ class InventoryComponent extends Component
             ->whereDate('expiration_date', '>', now());
     }
 
-    /** Batches expiring within 90 days — the pharmacy's rotation window. */
+    /**
+     * Meses de vigencia a partir de los cuales el lote entra en alerta.
+     * Configurable en config/drogueria.php; por defecto, seis.
+     */
+    public function expiryAlertMonths(): int
+    {
+        return max(1, (int) config('drogueria.inventory.expiry_alert_months', 6));
+    }
+
+    /** Fecha límite de la alerta: hoy más la ventana configurada. */
+    protected function expiryLimit()
+    {
+        return now()->addMonths($this->expiryAlertMonths());
+    }
+
+    /**
+     * Los mismos meses expresados en días, que es como la lista pinta cada
+     * lote según lo que le falte para vencer.
+     */
+    #[Computed]
+    public function expiryAlertDays(): int
+    {
+        return (int) now()->startOfDay()->diffInDays(now()->startOfDay()->addMonths($this->expiryAlertMonths()));
+    }
+
+    /** Lotes vigentes a los que ya les queda menos que la ventana de alerta. */
     protected function expiringBatches($query)
     {
         return $query->where('is_active', true)
             ->where('stock', '>', 0)
-            ->whereBetween('expiration_date', [now(), now()->addDays(90)]);
+            ->whereBetween('expiration_date', [now(), $this->expiryLimit()]);
+    }
+
+    /**
+     * Existencias que sirven para reponer: las que aún tienen por delante más
+     * que la ventana de alerta. Lo que vence antes se sigue vendiendo, pero no
+     * cuenta como respaldo a la hora de decidir si hay que pedir más.
+     */
+    protected function healthyBatches($query)
+    {
+        return $query->where('is_active', true)
+            ->where('stock', '>', 0)
+            ->whereDate('expiration_date', '>', $this->expiryLimit());
     }
 
     /**
@@ -112,7 +149,7 @@ class InventoryComponent extends Component
             ->selectRaw('COALESCE(SUM(stock), 0)')
             ->whereColumn('batches.product_id', 'products.id');
 
-        $this->availableBatches($sub);
+        $this->healthyBatches($sub);
 
         return $query->whereRaw(
             '('.$sub->toSql().') <= products.min_stock',
@@ -125,6 +162,9 @@ class InventoryComponent extends Component
     {
         return Product::query()
             ->withSum(['batches as total_stock' => fn ($q) => $this->availableBatches($q)], 'stock')
+            // Existencias con vigencia suficiente: son las que deciden si el
+            // producto se marca en rojo, no las que simplemente están en bodega.
+            ->withSum(['batches as healthy_stock' => fn ($q) => $this->healthyBatches($q)], 'stock')
             ->with(['batches' => fn ($q) => $q->orderBy('expiration_date')])
             ->when($this->search !== '', function ($query) {
                 $term = trim($this->search);

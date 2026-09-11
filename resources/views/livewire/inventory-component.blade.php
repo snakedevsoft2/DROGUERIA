@@ -25,7 +25,7 @@
                     wire:click="$set('filter', 'expiring')"
                     class="px-3 py-2 rounded-xl bg-orange-50 border border-orange-200 text-orange-800 text-sm font-semibold hover:bg-orange-100 transition"
                 >
-                    Por vencer (90d)
+                    Por vencer ({{ $this->expiryAlertMonths() }} meses)
                     <span class="ml-1 inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-orange-500 text-white text-xs">
                         {{ $this->expiringCount }}
                     </span>
@@ -94,7 +94,11 @@
                         @forelse ($products as $product)
                             @php
                                 $stock = (int) ($product->total_stock ?? 0);
-                                $isLow = $stock <= $product->min_stock;
+                                // Lo que vence dentro de la ventana de alerta no cuenta
+                                // como respaldo: el producto ya hay que reponerlo.
+                                $vigente = (int) ($product->healthy_stock ?? 0);
+                                $porVencer = max(0, $stock - $vigente);
+                                $isLow = $vigente <= $product->min_stock;
                             @endphp
                             <tr wire:key="product-{{ $product->id }}" class="hover:bg-slate-50 align-top transition">
                                 <td class="p-4">
@@ -117,6 +121,9 @@
                                         'bg-emerald-100 text-emerald-800' => ! $isLow,
                                     ])>{{ $stock }}</span>
                                     <p class="text-[11px] text-slate-400 mt-1">mín. {{ $product->min_stock }}</p>
+                                    @if ($porVencer > 0)
+                                        <p class="text-[11px] text-orange-600 font-semibold">{{ $porVencer }} por vencer</p>
+                                    @endif
                                 </td>
                                 <td class="p-4">
                                     <div class="flex flex-col gap-1">
@@ -132,8 +139,8 @@
                                                 <span @class([
                                                     'px-1.5 py-0.5 rounded font-semibold',
                                                     'bg-red-100 text-red-800' => $days <= 0,
-                                                    'bg-orange-100 text-orange-800' => $days > 0 && $days <= 90,
-                                                    'bg-slate-100 text-slate-600' => $days > 90,
+                                                    'bg-orange-100 text-orange-800' => $days > 0 && $days <= $this->expiryAlertDays,
+                                                    'bg-slate-100 text-slate-600' => $days > $this->expiryAlertDays,
                                                 ])>
                                                     {{ $batch->batch_number }}
                                                 </span>

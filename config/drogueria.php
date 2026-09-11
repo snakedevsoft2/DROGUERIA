@@ -95,6 +95,22 @@ return [
     |--------------------------------------------------------------------------
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Inventario
+    |--------------------------------------------------------------------------
+    |
+    | Meses de vigencia por debajo de los cuales un lote entra en alerta. Un
+    | medicamento al que le quedan pocos meses ya no sirve para reponer: sale
+    | en "Por vencer" y su producto cuenta como stock bajo, aunque en bodega
+    | queden muchas unidades.
+    |
+    */
+
+    'inventory' => [
+        'expiry_alert_months' => (int) env('INVENTORY_EXPIRY_ALERT_MONTHS', 6),
+    ],
+
     'receipt' => [
         // Ancho del rollo: 80mm o 58mm.
         'width' => env('RECEIPT_WIDTH', '80mm'),
