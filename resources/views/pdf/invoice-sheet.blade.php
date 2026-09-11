@@ -71,13 +71,12 @@
             letter-spacing: .5px;
         }
 
+        .documento { margin-top: 5mm; }
+
         .doc-tipo {
             font-size: .82em;
             letter-spacing: 2.5px;
             text-transform: uppercase;
-            border-bottom: 1px solid #1a1a1a;
-            padding-bottom: 3px;
-            margin-bottom: 5px;
         }
 
         .doc-numero {
@@ -91,10 +90,14 @@
 
         .datos table { width: 100%; border-collapse: collapse; }
         .datos td { padding: 1.5px 0; }
-        .datos .etiqueta { width: 24mm; color: #555; }
+        .datos .etiqueta { width: 30mm; color: #555; }
 
+        .datos table { width: 92mm; }
+
+        /* La tabla no se estira a toda la hoja: así las cifras quedan al lado
+           del producto y la factura se lee como una sola columna. */
         .items {
-            width: 100%;
+            width: 125mm;
             border-collapse: collapse;
             table-layout: fixed;
         }
@@ -115,10 +118,10 @@
 
         .items tr { page-break-inside: avoid; break-inside: avoid; }
 
-        .c-item  { width: 9%;  text-align: left; padding-left: 0 !important; }
-        .c-name  { width: 61%; word-break: break-word; overflow-wrap: anywhere; }
-        .c-qty   { width: 12%; text-align: right; white-space: nowrap; }
-        .c-total { width: 18%; text-align: right; white-space: nowrap; padding-right: 0 !important; }
+        .c-item  { width: 7%;  text-align: left; padding-left: 0 !important; }
+        .c-name  { width: 53%; word-break: break-word; overflow-wrap: anywhere; }
+        .c-qty   { width: 14%; text-align: right; white-space: nowrap; }
+        .c-total { width: 26%; text-align: right; white-space: nowrap; padding-right: 0 !important; }
 
         .presentation {
             display: block;
@@ -232,9 +235,8 @@
         <div class="marco">
 
             <div class="cabecera">
-                <table>
-                    <tr>
-                        <td>
+                <div>
+                    <div>
                             @if ($logo)
                                 <img class="logo" src="{{ $logo }}" alt="{{ $store['name'] }}">
                             @else
@@ -251,16 +253,16 @@
                                 ])->filter();
                             @endphp
 
-                            @foreach ($datos as $dato)
-                                <div class="muted">{{ $dato }}</div>
-                            @endforeach
-                        </td>
-                        <td style="width:62mm">
-                            <div class="doc-tipo">Comprobante de venta</div>
-                            <div class="doc-numero">{{ $sale->invoice_number }}</div>
-                        </td>
-                    </tr>
-                </table>
+                        @foreach ($datos as $dato)
+                            <div class="muted">{{ $dato }}</div>
+                        @endforeach
+                    </div>
+
+                    <div class="documento">
+                        <div class="doc-tipo">Comprobante de venta</div>
+                        <div class="doc-numero">{{ $sale->invoice_number }}</div>
+                    </div>
+                </div>
             </div>
 
             <div class="datos">
@@ -268,12 +270,16 @@
                     <tr>
                         <td class="etiqueta">Fecha</td>
                         <td>{{ $sale->created_at->format('d/m/Y') }} &middot; {{ $sale->created_at->format('H:i') }}</td>
+                    </tr>
+                    <tr>
                         <td class="etiqueta">Forma de pago</td>
                         <td class="bold">{{ $methods[$sale->payment_method] ?? strtoupper($sale->payment_method) }}</td>
                     </tr>
                     <tr>
                         <td class="etiqueta">Atendió</td>
                         <td>{{ $sale->user?->name ?? '—' }}</td>
+                    </tr>
+                    <tr>
                         <td class="etiqueta">Artículos</td>
                         <td>{{ $lines->sum('quantity') }}</td>
                     </tr>
