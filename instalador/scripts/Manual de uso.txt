@@ -1,0 +1,143 @@
+===========================================================================
+  PUNTO DE VENTA - DROGUERÍA
+  Manual de uso
+===========================================================================
+
+
+  ABRIR Y CERRAR EL PROGRAMA
+  --------------------------
+
+  Abrir:  doble clic en el icono "Droguería" del escritorio.
+          La primera vez del día tarda unos segundos en aparecer.
+
+  Cerrar: cierre la ventana del programa. Si quiere apagarlo del todo,
+          use "Cerrar programa" dentro de la carpeta C:\Drogueria.
+
+  El programa funciona SIN INTERNET. Trabaja solo en este computador.
+
+
+  VENDER
+  ------
+
+  1. Dispare el lector sobre el código de barras del producto.
+     El producto entra solo al carrito. No hay que hacer clic en nada.
+
+     Si el producto no tiene código de barras, escriba parte del nombre
+     en el buscador y haga clic en el que aparece.
+
+  2. Repita con cada producto. Para cambiar la cantidad, escriba el
+     número en la casilla de la fila.
+
+  3. Haga clic en COBRAR.
+
+  4. Escriba con cuánto paga el cliente. El programa calcula el cambio.
+
+  5. Haga clic en CONFIRMAR VENTA.
+
+     El tiquete sale solo por la impresora. En la pantalla queda una
+     vista previa por si hay que imprimirlo otra vez ("Reimprimir
+     tiquete").
+
+
+  EL LECTOR DE CÓDIGOS
+  --------------------
+
+  Funciona como un teclado: "escribe" el código y da Enter.
+
+  Para que funcione, el cursor tiene que estar en la casilla de
+  búsqueda (la de arriba, la grande). Si dispara y no pasa nada, haga
+  clic dentro de esa casilla y vuelva a disparar.
+
+  Si el lector lee pero entran caracteres raros, está configurado en
+  otro idioma de teclado. Se arregla escaneando el código de
+  configuración "Teclado español / Spanish keyboard" del manual del
+  lector.
+
+
+  INVENTARIO
+  ----------
+
+  En la pestaña INVENTARIO se cargan los productos y sus lotes.
+
+  Cada producto necesita al menos un LOTE con:
+      - cantidad
+      - fecha de vencimiento
+
+  El programa descuenta SIEMPRE del lote que vence primero. Así la
+  mercancía vieja sale antes que la nueva.
+
+  Un lote vencido deja de venderse automáticamente: el producto no
+  aparece disponible aunque figure cantidad. Eso es a propósito.
+
+  Las alertas de arriba muestran lo que está por vencerse y lo que está
+  por debajo del mínimo.
+
+
+  REPORTES
+  --------
+
+  Ventas del día, de la semana o del rango que elija, con el detalle de
+  cada transacción y los productos más vendidos.
+
+
+  COPIAS DE SEGURIDAD  (IMPORTANTE)
+  ---------------------------------
+
+  TODA la información del negocio está en este computador. Si el disco
+  se daña, se pierde todo: productos, lotes y el historial de ventas.
+
+  Una vez por semana (o al cerrar caja):
+
+      1. Abra la carpeta C:\Drogueria
+      2. Doble clic en "Respaldar datos"
+      3. Cuando pregunte, responda S para abrir la carpeta
+      4. Copie el archivo más reciente a una memoria USB o al correo
+
+  El paso 4 es el que de verdad protege: un respaldo guardado en el
+  mismo computador se pierde junto con el computador.
+
+
+  LA IMPRESORA
+  ------------
+
+  El tiquete sale solo al confirmar la venta.
+
+  Si deja de imprimir, revise en este orden:
+
+      1. ¿Está encendida? (luz verde fija)
+      2. ¿Tiene papel? (luz roja parpadeando = sin papel)
+      3. ¿Está bien cerrada la tapa del rollo?
+      4. ¿El cable USB está conectado?
+
+  Si sigue sin imprimir, abra "Configurar impresora" en la carpeta
+  C:\Drogueria y mande un tiquete de prueba: ahí sale el mensaje de
+  error exacto.
+
+  Mientras tanto puede seguir vendiendo: la venta se registra igual.
+  En la vista previa del tiquete hay un enlace pequeño que dice
+  "Imprimir con otra impresora" para sacarlo por cualquier otra
+  impresora del equipo.
+
+
+  CAMBIAR LOS DATOS DEL TIQUETE
+  -----------------------------
+
+  El nombre, NIT, dirección, teléfono y los mensajes del pie están en:
+
+      C:\Drogueria\app\.env
+
+  Se abre con el Bloc de notas. Cambie lo que necesite, guarde, y
+  cierre y vuelva a abrir el programa.
+
+
+  HERRAMIENTAS EN C:\Drogueria
+  ----------------------------
+
+    Respaldar datos ............. copia de seguridad
+    Configurar impresora ........ cambiar o probar la impresora
+    Cerrar programa ............. detiene el punto de venta
+    Cargar datos de ejemplo ..... catálogo de prueba (NO usar con
+                                  datos reales: los mezcla)
+    Iniciar (modo diagnostico) .. muestra los errores en pantalla
+
+===========================================================================

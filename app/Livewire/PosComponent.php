@@ -6,6 +6,7 @@ use App\Models\Batch;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleDetail;
+use App\Services\ReceiptPrinter;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -58,12 +59,16 @@ class PosComponent extends Component
             return collect();
         }
 
+        // 'ilike' sólo existe en PostgreSQL; en la instalación local la base
+        // es SQLite, donde LIKE ya ignora mayúsculas para ASCII.
+        $like = DB::connection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
+
         return Product::query()
             ->where('is_active', true)
-            ->where(function ($query) use ($term) {
-                $query->where('name', 'ilike', "%{$term}%")
-                    ->orWhere('barcode', 'ilike', "%{$term}%")
-                    ->orWhere('presentation', 'ilike', "%{$term}%");
+            ->where(function ($query) use ($term, $like) {
+                $query->where('name', $like, "%{$term}%")
+                    ->orWhere('barcode', $like, "%{$term}%")
+                    ->orWhere('presentation', $like, "%{$term}%");
             })
             ->withSum(['batches as total_stock' => fn ($q) => $this->availableBatches($q)], 'stock')
             ->orderBy('name')
@@ -256,6 +261,53 @@ class PosComponent extends Component
         $this->showReceiptPreview = false;
     }
 
+    /** ¿Mostrar el botón de tiquetera, o sólo el del navegador? */
+    #[Computed]
+    public function printerReady(): bool
+    {
+        return app(ReceiptPrinter::class)->isConfigured();
+    }
+
+    /** Manda la última venta a la tiquetera desde el botón del modal. */
+    public function printLastReceipt(): void
+    {
+        if (! $this->lastSaleId) {
+            return;
+        }
+
+        $sale = Sale::find($this->lastSaleId);
+
+        if (! $sale) {
+            $this->dispatch('toast', type: 'error', message: 'No se encontró la venta a imprimir.');
+
+            return;
+        }
+
+        if ($this->sendToPrinter($sale)) {
+            $this->dispatch('toast', type: 'success', message: 'Tiquete enviado a la impresora.');
+        }
+    }
+
+    /**
+     * Envía el tiquete a la térmica. Devuelve false —y avisa al cajero— si
+     * no se pudo: la venta ya está guardada, así que un fallo de impresión
+     * nunca debe interrumpir la caja.
+     */
+    protected function sendToPrinter(Sale $sale): bool
+    {
+        try {
+            app(ReceiptPrinter::class)->print($sale);
+
+            return true;
+        } catch (Exception $e) {
+            report($e);
+
+            $this->dispatch('toast', type: 'error', message: $e->getMessage());
+
+            return false;
+        }
+    }
+
     /**
      * Card and transfer payments are always settled at the exact total,
      * so there is no change to hand back.
@@ -330,10 +382,17 @@ class PosComponent extends Component
         unset($this->searchResults);
 
         // El carrito ya quedó limpio para la siguiente venta; el comprobante
-        // se muestra en pantalla para revisarlo antes de gastar papel.
+        // queda en pantalla para revisarlo o reimprimirlo.
         $this->showReceiptPreview = true;
 
         $this->dispatch('toast', type: 'success', message: "Venta {$invoice} registrada con éxito.");
+
+        // El tiquete sale solo: el cajero no tiene que pulsar nada más. Si la
+        // impresora falla, sendToPrinter() avisa y el modal sigue abierto
+        // para reintentar o imprimir desde el navegador.
+        if (config('drogueria.printer.auto_print') && $this->printerReady) {
+            $this->sendToPrinter($sale);
+        }
     }
 
     /**

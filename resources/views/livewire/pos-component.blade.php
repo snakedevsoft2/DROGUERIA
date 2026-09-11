@@ -353,20 +353,54 @@
                     ></iframe>
                 </div>
 
-                <div class="px-5 py-4 bg-slate-50 border-t border-slate-100 flex gap-3 shrink-0 rounded-b-2xl">
-                    <button type="button" wire:click="closeReceiptPreview" class="flex-1 py-3 rounded-xl border border-slate-300 text-slate-600 font-semibold hover:bg-white transition">
-                        Cerrar
-                    </button>
-                    <button
-                        type="button"
-                        x-on:click="printReceipt()"
-                        class="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition flex items-center justify-center gap-2"
-                    >
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-                        </svg>
-                        Imprimir
-                    </button>
+                <div class="px-5 py-4 bg-slate-50 border-t border-slate-100 shrink-0 rounded-b-2xl space-y-2">
+                    <div class="flex gap-3">
+                        <button type="button" wire:click="closeReceiptPreview" class="flex-1 py-3 rounded-xl border border-slate-300 text-slate-600 font-semibold hover:bg-white transition">
+                            Cerrar
+                        </button>
+
+                        {{-- Con tiquetera configurada el tiquete ya salió solo;
+                             este botón es para reimprimirlo. --}}
+                        @if ($this->printerReady)
+                            <button
+                                type="button"
+                                wire:click="printLastReceipt"
+                                wire:loading.attr="disabled"
+                                wire:target="printLastReceipt"
+                                class="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-bold transition flex items-center justify-center gap-2"
+                            >
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                </svg>
+                                <span wire:loading.remove wire:target="printLastReceipt">Reimprimir tiquete</span>
+                                <span wire:loading wire:target="printLastReceipt">Enviando...</span>
+                            </button>
+                        @else
+                            <button
+                                type="button"
+                                x-on:click="printReceipt()"
+                                class="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition flex items-center justify-center gap-2"
+                            >
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                </svg>
+                                Imprimir
+                            </button>
+                        @endif
+                    </div>
+
+                    {{-- Salida de emergencia si la tiquetera se queda sin papel
+                         o se desconecta a mitad de la jornada: abre el diálogo
+                         de impresión de Windows para usar cualquier otra. --}}
+                    @if ($this->printerReady)
+                        <button
+                            type="button"
+                            x-on:click="printReceipt()"
+                            class="w-full py-2 text-xs text-slate-500 hover:text-slate-700 font-semibold transition"
+                        >
+                            Imprimir con otra impresora
+                        </button>
+                    @endif
                 </div>
             </div>
         </div>
