@@ -17,8 +17,8 @@
 
     <style>
         @page {
-            size: letter portrait;
-            margin: 14mm 14mm 16mm;
+            size: A4 portrait;
+            margin: 12mm 12mm 14mm;
         }
 
         * { box-sizing: border-box; }
@@ -28,16 +28,18 @@
             background: #f1f5f9;
             color: #0f172a;
             font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-            font-size: 12px;
+            /* Calibrado para A4 al 100%: no hace falta subir la escala del
+               diálogo de impresión. */
+            font-size: 13.3px;
             line-height: 1.45;
         }
 
         /* En pantalla la hoja se ve como tal; al imprimir, el papel manda. */
         .sheet {
-            width: 216mm;
-            min-height: 279mm;
+            width: 210mm;
+            min-height: 297mm;
             margin: 16px auto;
-            padding: 16mm 14mm;
+            padding: 14mm 12mm;
             background: #fff;
             box-shadow: 0 2px 12px rgba(15, 23, 42, .15);
         }
@@ -68,7 +70,7 @@
         }
 
         .store-name {
-            font-size: 19px;
+            font-size: 1.45em;
             font-weight: 700;
             letter-spacing: .3px;
             margin-bottom: 2px;
@@ -81,14 +83,14 @@
         }
 
         .doc-title {
-            font-size: 13px;
+            font-size: 1em;
             font-weight: 700;
             letter-spacing: 1px;
             margin-bottom: 4px;
         }
 
         .doc-number {
-            font-size: 17px;
+            font-size: 1.3em;
             font-weight: 700;
         }
 
@@ -96,7 +98,7 @@
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 14px;
-            font-size: 11.5px;
+            font-size: .88em;
         }
 
         .meta td {
@@ -122,7 +124,7 @@
         .items th {
             background: #0f172a;
             color: #fff;
-            font-size: 11px;
+            font-size: .85em;
             letter-spacing: .5px;
             text-align: left;
             padding: 7px 8px;
@@ -153,7 +155,7 @@
 
         .presentation {
             display: block;
-            font-size: 10.5px;
+            font-size: .82em;
             color: #64748b;
         }
 
@@ -166,7 +168,7 @@
         }
 
         .totals {
-            width: 82mm;
+            width: 86mm;
             margin-left: auto;
             border-collapse: collapse;
             table-layout: fixed;
@@ -182,7 +184,7 @@
         .totals .grand td {
             border-top: 1.5px solid #0f172a;
             border-bottom: 1.5px solid #0f172a;
-            font-size: 15px;
+            font-size: 1.18em;
             font-weight: 700;
             padding: 7px 8px;
         }
@@ -196,7 +198,7 @@
             margin-top: 22px;
             padding-top: 10px;
             border-top: 1px solid #e2e8f0;
-            font-size: 10.5px;
+            font-size: .82em;
             color: #475569;
             page-break-inside: avoid;
             break-inside: avoid;
@@ -211,7 +213,7 @@
         .sign td {
             width: 50%;
             padding-top: 24px;
-            font-size: 10.5px;
+            font-size: .82em;
             text-align: center;
             color: #475569;
         }
@@ -230,7 +232,8 @@
         .toolbar button,
         .toolbar a {
             display: inline-block;
-            font: inherit;
+            font-family: inherit;
+            font-size: 13px;
             padding: 8px 16px;
             margin: 0 3px;
             border: 1px solid #0f172a;
