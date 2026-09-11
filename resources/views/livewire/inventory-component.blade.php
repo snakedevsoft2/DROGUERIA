@@ -229,7 +229,23 @@
                     <button type="button" wire:click="$set('showProductModal', false)" class="text-slate-400 hover:text-slate-700 text-2xl leading-none">&times;</button>
                 </div>
 
-                <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div
+                    class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4"
+                    x-data="{
+                        unidades: @js(max(1, (int) $units_per_package)),
+                        costo: @js((float) $cost_price),
+                        margen: @js((float) config('drogueria.inventory.default_margin_percent', 30)),
+                        get costoUnidad() { return Math.round(this.costo / Math.max(1, this.unidades)) },
+                        get sugerido() { return Math.ceil(this.costoUnidad * (1 + this.margen / 100) / 100) * 100 },
+                        pesos(valor) { return '$' + Math.round(valor || 0).toLocaleString('es-CO') },
+                        usarSugerido() {
+                            // Se avisa a Livewire con un evento para que recoja el
+                            // valor, sin mandar nada al servidor todavía.
+                            this.$refs.precio.value = this.sugerido
+                            this.$refs.precio.dispatchEvent(new Event('input'))
+                        },
+                    }"
+                >
                     <div class="md:col-span-2">
                         <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Nombre *</label>
                         <input type="text" wire:model="name" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-sm">
@@ -250,27 +266,42 @@
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Unidades por presentación *</label>
-                        <input type="number" min="1" step="1" wire:model.live="units_per_package" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-sm">
+                        <input
+                            type="number" min="1" step="1"
+                            wire:model="units_per_package"
+                            x-on:input="unidades = Number($event.target.value) || 1"
+                            class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-sm"
+                        >
                         <p class="text-[11px] text-slate-400 mt-1">Cuántas tabletas o unidades trae la caja. Si se vende entera, deje 1.</p>
                         @error('units_per_package') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Costo de la presentación *</label>
-                        <input type="number" step="1" min="0" wire:model.live.debounce.500ms="cost_price" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-sm">
+                        <input
+                            type="number" step="1" min="0"
+                            wire:model="cost_price"
+                            x-on:input="costo = Number($event.target.value) || 0"
+                            class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-sm"
+                        >
                         <p class="text-[11px] text-slate-500 mt-1">
                             Costo por unidad:
-                            <span class="font-bold text-slate-700">${{ number_format($this->unitCost, 0, ',', '.') }}</span>
+                            <span class="font-bold text-slate-700" x-text="pesos(costoUnidad)"></span>
                         </p>
                         @error('cost_price') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Precio de venta por unidad *</label>
-                        <input type="number" step="1" min="0" wire:model="selling_price" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-sm">
+                        <input
+                            type="number" step="1" min="0"
+                            wire:model="selling_price"
+                            x-ref="precio"
+                            class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-sm"
+                        >
                         <p class="text-[11px] text-slate-500 mt-1">
-                            Sugerido: <span class="font-bold text-slate-700">${{ number_format($this->suggestedPrice, 0, ',', '.') }}</span>
-                            <button type="button" wire:click="applySuggestedPrice" class="ml-1 text-blue-600 hover:text-blue-800 font-semibold">usar</button>
+                            Sugerido: <span class="font-bold text-slate-700" x-text="pesos(sugerido)"></span>
+                            <button type="button" x-on:click="usarSugerido()" class="ml-1 text-blue-600 hover:text-blue-800 font-semibold">usar</button>
                         </p>
                         @error('selling_price') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>
