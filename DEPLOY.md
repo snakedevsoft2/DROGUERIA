@@ -49,6 +49,24 @@ sigue apuntando a tu MySQL de siempre.
 Para volver a dejar la demo como recién instalada (por ejemplo después de que el
 cliente la use), el mismo comando con `migrate:fresh --force --seed`.
 
+### Empezar de cero con datos reales
+
+Cuando la droguería va a cargar su propio catálogo, `drogueria:vaciar` deja las
+tablas del negocio en blanco sin tocar el esquema. Los contadores se reinician,
+así que la primera venta vuelve a ser la factura `FAC-00000001`:
+
+```powershell
+php artisan drogueria:vaciar            # inventario y ventas
+php artisan drogueria:vaciar --ventas   # sólo las ventas
+```
+
+> **Si la conexión a Neon falla con `SQLSTATE[08006] server closed the
+> connection unexpectedly`**, el PHP de ese equipo trae una libpq anterior a la
+> 14: no envía SNI y Neon corta la conexión antes de autenticar. No es la
+> contraseña. Se resuelve corriendo el comando desde un equipo con PostgreSQL 14
+> o superior instalado, o aplicando el SQL con el driver HTTP de Neon
+> (`@neondatabase/serverless` desde Node, que va por HTTPS).
+
 ## 3. Compilar los estilos y subir el repositorio
 
 Los assets de Vite se versionan a propósito: Vercel los sirve como archivos
