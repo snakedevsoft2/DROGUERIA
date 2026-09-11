@@ -49,21 +49,16 @@ class ReportesTest extends TestCase
         $this->assertSame(0.0, $resumen['average']);
     }
 
-    public function test_las_ventas_no_se_pueden_eliminar_desde_la_aplicacion(): void
+    public function test_una_venta_solo_se_elimina_con_la_clave(): void
     {
-        $this->venta(10000);
+        $sale = $this->venta(10000);
 
-        $metodos = get_class_methods(ReportsComponent::class);
+        Livewire::test(ReportsComponent::class)
+            ->call('confirmDeleteSale', $sale->id)
+            ->call('deleteSale')
+            ->assertHasErrors('deletePassword');
 
-        foreach ($metodos as $metodo) {
-            $this->assertStringNotContainsStringIgnoringCase(
-                'delete',
-                $metodo,
-                "Reportes no debe exponer ninguna acción de borrado ({$metodo})."
-            );
-        }
-
-        $this->assertSame(1, Sale::count());
+        $this->assertSame(1, Sale::count(), 'Sin clave la venta se queda.');
     }
 
     public function test_el_detalle_muestra_el_producto_aunque_se_haya_eliminado(): void
