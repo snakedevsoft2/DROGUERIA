@@ -29,7 +29,7 @@ class PrinterCommand extends Command
         $this->line('');
         $this->line('  Impresora : '.($name !== '' ? $name : '(sin configurar)'));
         $this->line('  Perfil    : '.config('drogueria.printer.profile'));
-        $this->line('  Columnas  : '.config('drogueria.printer.columns').'  (42 = rollo 80mm, 32 = rollo 58mm)');
+        $this->line('  Columnas  : '.config('drogueria.printer.columns').'  (48 o 42 = rollo 80mm, 32 = rollo 58mm)');
         $this->line('  Corte     : '.(config('drogueria.printer.cut') ? 'sí' : 'no'));
         $this->line('');
 
