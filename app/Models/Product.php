@@ -16,6 +16,19 @@ class Product extends Model
     ];
 
     /**
+     * En pesos no hay centavos: los precios se manejan como números enteros,
+     * y así los formularios no muestran el "100,00" que devuelve la base.
+     */
+    protected $casts = [
+        'cost_price' => 'float',
+        'selling_price' => 'float',
+        'units_per_package' => 'integer',
+        'min_stock' => 'integer',
+        'requires_prescription' => 'boolean',
+        'is_active' => 'boolean',
+    ];
+
+    /**
      * Lo que cuesta cada unidad suelta.
      *
      * El costo se registra por presentación —lo que se le paga al proveedor por

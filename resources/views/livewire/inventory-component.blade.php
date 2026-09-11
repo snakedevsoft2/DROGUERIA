@@ -257,7 +257,7 @@
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Costo de la presentación *</label>
-                        <input type="number" step="0.01" min="0" wire:model.live.debounce.500ms="cost_price" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-sm">
+                        <input type="number" step="1" min="0" wire:model.live.debounce.500ms="cost_price" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-sm">
                         <p class="text-[11px] text-slate-500 mt-1">
                             Costo por unidad:
                             <span class="font-bold text-slate-700">${{ number_format($this->unitCost, 0, ',', '.') }}</span>
@@ -267,7 +267,7 @@
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Precio de venta por unidad *</label>
-                        <input type="number" step="0.01" min="0" wire:model="selling_price" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-sm">
+                        <input type="number" step="1" min="0" wire:model="selling_price" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-sm">
                         <p class="text-[11px] text-slate-500 mt-1">
                             Sugerido: <span class="font-bold text-slate-700">${{ number_format($this->suggestedPrice, 0, ',', '.') }}</span>
                             <button type="button" wire:click="applySuggestedPrice" class="ml-1 text-blue-600 hover:text-blue-800 font-semibold">usar</button>
