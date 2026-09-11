@@ -38,6 +38,9 @@ class InventoryComponent extends Component
 
     public string $presentation = '';
 
+    /** Unidades que trae la presentación: una caja x 10 son 10. */
+    public $units_per_package = 1;
+
     public string $description = '';
 
     public $cost_price = 0;
@@ -221,6 +224,7 @@ class InventoryComponent extends Component
         $this->barcode = (string) $product->barcode;
         $this->name = (string) $product->name;
         $this->presentation = (string) $product->presentation;
+        $this->units_per_package = $product->units_per_package;
         $this->description = (string) $product->description;
         $this->cost_price = $product->cost_price;
         $this->selling_price = $product->selling_price;
@@ -232,15 +236,52 @@ class InventoryComponent extends Component
         $this->showProductModal = true;
     }
 
+    /** Costo de cada unidad según lo que se está escribiendo en el formulario. */
+    #[Computed]
+    public function unitCost(): float
+    {
+        $unidades = max(1, (int) $this->units_per_package);
+
+        return round((float) $this->cost_price / $unidades, 2);
+    }
+
+    /**
+     * Precio de venta sugerido para la unidad: el costo unitario más el margen
+     * de la casa, redondeado a la centena de arriba porque en el mostrador no
+     * se manejan monedas menores.
+     */
+    #[Computed]
+    public function suggestedPrice(): float
+    {
+        $margen = (float) config('drogueria.inventory.default_margin_percent', 30);
+
+        return (float) (ceil($this->unitCost * (1 + $margen / 100) / 100) * 100);
+    }
+
+    /** Copia el precio sugerido al formulario; el usuario puede cambiarlo. */
+    public function applySuggestedPrice(): void
+    {
+        $this->selling_price = $this->suggestedPrice;
+    }
+
     protected function productRules(): array
     {
         return [
             'barcode' => ['required', 'string', 'max:64', Rule::unique('products', 'barcode')->ignore($this->productId)],
             'name' => ['required', 'string', 'max:255'],
             'presentation' => ['nullable', 'string', 'max:255'],
+            'units_per_package' => ['required', 'integer', 'min:1', 'max:10000'],
             'description' => ['nullable', 'string', 'max:2000'],
             'cost_price' => ['required', 'numeric', 'min:0'],
-            'selling_price' => ['required', 'numeric', 'min:0', 'gte:cost_price'],
+            'selling_price' => [
+                'required', 'numeric', 'min:0',
+                function ($attribute, $value, $fail) {
+                    if ((float) $value < $this->unitCost) {
+                        $fail('El precio por unidad no puede ser menor al costo por unidad ($'
+                            .number_format($this->unitCost, 0, ',', '.').').');
+                    }
+                },
+            ],
             'min_stock' => ['required', 'integer', 'min:0'],
             'requires_prescription' => ['boolean'],
             'is_active' => ['boolean'],
@@ -251,7 +292,6 @@ class InventoryComponent extends Component
     {
         return [
             'barcode.unique' => 'Ya existe un producto con este código de barras.',
-            'selling_price.gte' => 'El precio de venta no puede ser menor al costo.',
             'expiration_date.after' => 'La fecha de vencimiento debe ser posterior a hoy.',
         ];
     }
@@ -334,7 +374,7 @@ class InventoryComponent extends Component
     protected function resetProductForm(): void
     {
         $this->reset([
-            'productId', 'barcode', 'name', 'presentation', 'description',
+            'productId', 'barcode', 'name', 'presentation', 'units_per_package', 'description',
             'cost_price', 'selling_price', 'min_stock', 'requires_prescription', 'is_active',
         ]);
         $this->resetValidation();

@@ -44,10 +44,10 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             @php
                 $cards = [
-                    ['label' => 'Ingresos', 'value' => '$'.number_format($summary['revenue'], 2), 'accent' => 'text-blue-600'],
+                    ['label' => 'Ingresos', 'value' => '$'.number_format($summary['revenue'], 0, ',', '.'), 'accent' => 'text-blue-600'],
                     ['label' => 'Transacciones', 'value' => number_format($summary['transactions']), 'accent' => 'text-slate-900'],
-                    ['label' => 'Ticket promedio', 'value' => '$'.number_format($summary['average'], 2), 'accent' => 'text-slate-900'],
-                    ['label' => 'Descuentos', 'value' => '$'.number_format($summary['discount'], 2), 'accent' => 'text-amber-600'],
+                    ['label' => 'Ticket promedio', 'value' => '$'.number_format($summary['average'], 0, ',', '.'), 'accent' => 'text-slate-900'],
+                    ['label' => 'Descuentos', 'value' => '$'.number_format($summary['discount'], 0, ',', '.'), 'accent' => 'text-amber-600'],
                 ];
             @endphp
 
@@ -81,7 +81,7 @@
                                     {{ \Illuminate\Support\Carbon::parse($day->day)->translatedFormat('D d M Y') }}
                                 </td>
                                 <td class="p-4 text-center">{{ $day->transactions }}</td>
-                                <td class="p-4 text-right font-bold text-slate-800">${{ number_format($day->revenue, 2) }}</td>
+                                <td class="p-4 text-right font-bold text-slate-800">${{ number_format($day->revenue, 0, ',', '.') }}</td>
                             </tr>
                         @empty
                             <tr><td colspan="3" class="p-8 text-center text-slate-400">Sin ventas en el rango seleccionado.</td></tr>
@@ -103,7 +103,7 @@
                             <div wire:key="pm-{{ $row->payment_method }}">
                                 <div class="flex justify-between mb-1">
                                     <span class="text-slate-600">{{ $labels[$row->payment_method] ?? $row->payment_method }}</span>
-                                    <span class="font-semibold text-slate-800">${{ number_format($row->revenue, 2) }}</span>
+                                    <span class="font-semibold text-slate-800">${{ number_format($row->revenue, 0, ',', '.') }}</span>
                                 </div>
                                 <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
                                     <div class="h-full bg-blue-500 rounded-full" style="width: {{ round($share, 1) }}%"></div>
@@ -131,7 +131,7 @@
                                 </div>
                                 <div class="text-right shrink-0">
                                     <p class="font-bold text-slate-800">{{ $product->units }} u.</p>
-                                    <p class="text-xs text-slate-400">${{ number_format($product->revenue, 2) }}</p>
+                                    <p class="text-xs text-slate-400">${{ number_format($product->revenue, 0, ',', '.') }}</p>
                                 </div>
                             </li>
                         @empty
@@ -170,8 +170,8 @@
                                         {{ ['cash' => 'Efectivo', 'card' => 'Tarjeta', 'transfer' => 'Transferencia'][$sale->payment_method] ?? $sale->payment_method }}
                                     </span>
                                 </td>
-                                <td class="p-4 text-right">${{ number_format($sale->subtotal, 2) }}</td>
-                                <td class="p-4 text-right font-bold text-slate-900">${{ number_format($sale->total, 2) }}</td>
+                                <td class="p-4 text-right">${{ number_format($sale->subtotal, 0, ',', '.') }}</td>
+                                <td class="p-4 text-right font-bold text-slate-900">${{ number_format($sale->total, 0, ',', '.') }}</td>
                                 <td class="p-4 text-center whitespace-nowrap">
                                     <button type="button" wire:click="toggleSale({{ $sale->id }})" class="text-blue-600 hover:text-blue-800 font-semibold text-xs">
                                         {{ $expandedSaleId === $sale->id ? 'Ocultar' : 'Ver' }}
@@ -206,17 +206,17 @@
                                                         <td class="py-2">{{ $detail->product?->name ?? $detail->product_name ?? 'Producto eliminado' }}</td>
                                                         <td class="py-2">{{ $detail->batch?->batch_number ?? '—' }}</td>
                                                         <td class="py-2 text-center">{{ $detail->quantity }}</td>
-                                                        <td class="py-2 text-right">${{ number_format($detail->unit_price, 2) }}</td>
-                                                        <td class="py-2 text-right font-semibold">${{ number_format($detail->subtotal, 2) }}</td>
+                                                        <td class="py-2 text-right">${{ number_format($detail->unit_price, 0, ',', '.') }}</td>
+                                                        <td class="py-2 text-right font-semibold">${{ number_format($detail->subtotal, 0, ',', '.') }}</td>
                                                     </tr>
                                                 @endforeach
                                             </tbody>
                                         </table>
 
                                         <div class="mt-3 pt-3 border-t border-slate-200 flex justify-end gap-6 text-xs text-slate-500">
-                                            <span>Descuento: <strong class="text-slate-700">${{ number_format($sale->discount, 2) }}</strong></span>
-                                            <span>Recibido: <strong class="text-slate-700">${{ number_format($sale->paid_amount, 2) }}</strong></span>
-                                            <span>Cambio: <strong class="text-slate-700">${{ number_format($sale->change_amount, 2) }}</strong></span>
+                                            <span>Descuento: <strong class="text-slate-700">${{ number_format($sale->discount, 0, ',', '.') }}</strong></span>
+                                            <span>Recibido: <strong class="text-slate-700">${{ number_format($sale->paid_amount, 0, ',', '.') }}</strong></span>
+                                            <span>Cambio: <strong class="text-slate-700">${{ number_format($sale->change_amount, 0, ',', '.') }}</strong></span>
                                         </div>
                                     </td>
                                 </tr>

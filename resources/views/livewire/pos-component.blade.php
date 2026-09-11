@@ -60,7 +60,7 @@
                                             </p>
                                         </div>
                                         <div class="text-right shrink-0">
-                                            <p class="font-bold text-blue-600">${{ number_format($product->selling_price, 2) }}</p>
+                                            <p class="font-bold text-blue-600">${{ number_format($product->selling_price, 0, ',', '.') }} <span class="text-[11px] font-semibold text-slate-400">/u</span></p>
                                             <span class="text-xs px-2 py-0.5 rounded-full {{ $stock > 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' }}">
                                                 Stock: {{ $stock }}
                                             </span>
@@ -95,7 +95,7 @@
                         <thead>
                             <tr class="bg-slate-100 text-slate-500 text-xs uppercase tracking-wider">
                                 <th class="p-4">Producto</th>
-                                <th class="p-4 text-center">Precio unit.</th>
+                                <th class="p-4 text-center">Precio /u</th>
                                 <th class="p-4 text-center">Cantidad</th>
                                 <th class="p-4 text-right">Subtotal</th>
                                 <th class="p-4 text-center">Acciones</th>
@@ -110,7 +110,7 @@
                                             {{ $item['barcode'] }} @if ($item['presentation']) &middot; {{ $item['presentation'] }} @endif
                                         </p>
                                     </td>
-                                    <td class="p-4 text-center">${{ number_format($item['unit_price'], 2) }}</td>
+                                    <td class="p-4 text-center">${{ number_format($item['unit_price'], 0, ',', '.') }}</td>
                                     <td class="p-4">
                                         <div class="flex items-center justify-center gap-2">
                                             <button
@@ -137,7 +137,7 @@
                                         </div>
                                         <p class="text-[11px] text-slate-400 text-center mt-1">Disp: {{ $item['max_stock'] }}</p>
                                     </td>
-                                    <td class="p-4 text-right font-bold text-slate-800">${{ number_format($item['subtotal'], 2) }}</td>
+                                    <td class="p-4 text-right font-bold text-slate-800">${{ number_format($item['subtotal'], 0, ',', '.') }}</td>
                                     <td class="p-4 text-center">
                                         <button type="button" wire:click="removeFromCart({{ $item['id'] }})" class="text-slate-400 hover:text-red-500 transition">
                                             <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -167,7 +167,7 @@
                 <div class="space-y-3 text-slate-600 text-sm">
                     <div class="flex justify-between">
                         <span>Subtotal</span>
-                        <span class="font-semibold text-slate-800">${{ number_format($this->subtotal, 2) }}</span>
+                        <span class="font-semibold text-slate-800">${{ number_format($this->subtotal, 0, ',', '.') }}</span>
                     </div>
 
                     <div class="flex justify-between items-center">
@@ -185,7 +185,7 @@
 
                     <div class="flex justify-between text-lg font-extrabold text-slate-900">
                         <span>TOTAL</span>
-                        <span class="text-blue-600">${{ number_format($this->total, 2) }}</span>
+                        <span class="text-blue-600">${{ number_format($this->total, 0, ',', '.') }}</span>
                     </div>
                 </div>
 
@@ -238,7 +238,7 @@
                 <div class="p-6 space-y-5">
                     <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 text-center">
                         <span class="block text-xs font-semibold uppercase tracking-wider text-blue-600">Total a pagar</span>
-                        <span class="text-3xl font-black text-blue-700">${{ number_format($this->total, 2) }}</span>
+                        <span class="text-3xl font-black text-blue-700">${{ number_format($this->total, 0, ',', '.') }}</span>
                     </div>
 
                     <div>
@@ -276,7 +276,7 @@
                                 {{ $covered ? 'Cambio a devolver' : 'Falta por cubrir' }}
                             </span>
                             <span class="text-2xl font-black {{ $covered ? 'text-emerald-700' : 'text-amber-700' }}">
-                                ${{ number_format($covered ? $this->change : $this->total - (float) $paidAmount, 2) }}
+                                ${{ number_format($covered ? $this->change : $this->total - (float) $paidAmount, 0, ',', '.') }}
                             </span>
                         </div>
                     @else

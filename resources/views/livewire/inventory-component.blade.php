@@ -82,8 +82,8 @@
                     <thead>
                         <tr class="bg-slate-100 text-slate-500 text-xs uppercase tracking-wider">
                             <th class="p-4">Producto</th>
-                            <th class="p-4 text-right">Costo</th>
-                            <th class="p-4 text-right">Venta</th>
+                            <th class="p-4 text-right">Costo /u</th>
+                            <th class="p-4 text-right">Venta /u</th>
                             <th class="p-4 text-center">Stock</th>
                             <th class="p-4">Lotes</th>
                             <th class="p-4 text-center">Estado</th>
@@ -112,8 +112,15 @@
                                         {{ $product->barcode }} @if ($product->presentation) &middot; {{ $product->presentation }} @endif
                                     </p>
                                 </td>
-                                <td class="p-4 text-right text-slate-500">${{ number_format($product->cost_price, 2) }}</td>
-                                <td class="p-4 text-right font-semibold text-slate-800">${{ number_format($product->selling_price, 2) }}</td>
+                                <td class="p-4 text-right text-slate-500">
+                                    ${{ number_format($product->unit_cost, 0, ',', '.') }}
+                                    @if ($product->units_per_package > 1)
+                                        <p class="text-[11px] text-slate-400">
+                                            caja ${{ number_format($product->cost_price, 0, ',', '.') }} &middot; {{ $product->units_per_package }} u.
+                                        </p>
+                                    @endif
+                                </td>
+                                <td class="p-4 text-right font-semibold text-slate-800">${{ number_format($product->selling_price, 0, ',', '.') }}</td>
                                 <td class="p-4 text-center">
                                     <span @class([
                                         'inline-block px-2.5 py-1 rounded-full text-xs font-bold',
@@ -243,14 +250,29 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Precio de costo *</label>
-                        <input type="number" step="0.01" min="0" wire:model="cost_price" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-sm">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Unidades por presentación *</label>
+                        <input type="number" min="1" step="1" wire:model.live="units_per_package" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-sm">
+                        <p class="text-[11px] text-slate-400 mt-1">Cuántas tabletas o unidades trae la caja. Si se vende entera, deje 1.</p>
+                        @error('units_per_package') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Costo de la presentación *</label>
+                        <input type="number" step="0.01" min="0" wire:model.live.debounce.500ms="cost_price" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-sm">
+                        <p class="text-[11px] text-slate-500 mt-1">
+                            Costo por unidad:
+                            <span class="font-bold text-slate-700">${{ number_format($this->unitCost, 0, ',', '.') }}</span>
+                        </p>
                         @error('cost_price') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Precio de venta *</label>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Precio de venta por unidad *</label>
                         <input type="number" step="0.01" min="0" wire:model="selling_price" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-sm">
+                        <p class="text-[11px] text-slate-500 mt-1">
+                            Sugerido: <span class="font-bold text-slate-700">${{ number_format($this->suggestedPrice, 0, ',', '.') }}</span>
+                            <button type="button" wire:click="applySuggestedPrice" class="ml-1 text-blue-600 hover:text-blue-800 font-semibold">usar</button>
+                        </p>
                         @error('selling_price') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>
 

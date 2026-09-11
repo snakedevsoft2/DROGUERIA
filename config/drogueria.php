@@ -109,6 +109,10 @@ return [
 
     'inventory' => [
         'expiry_alert_months' => (int) env('INVENTORY_EXPIRY_ALERT_MONTHS', 6),
+
+        // Margen con el que se propone el precio de venta por unidad al crear
+        // un producto. Es sólo una sugerencia: el campo queda editable.
+        'default_margin_percent' => (float) env('INVENTORY_MARGIN_PERCENT', 30),
     ],
 
     'receipt' => [
