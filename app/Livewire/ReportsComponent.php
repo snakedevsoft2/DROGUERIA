@@ -100,7 +100,6 @@ class ReportsComponent extends Component
             ->selectRaw('COUNT(*) as transactions')
             ->selectRaw('COALESCE(SUM(subtotal), 0) as subtotal')
             ->selectRaw('COALESCE(SUM(discount), 0) as discount')
-            ->selectRaw('COALESCE(SUM(tax), 0) as tax')
             ->selectRaw('COALESCE(SUM(total), 0) as revenue')
             ->first();
 
@@ -110,7 +109,6 @@ class ReportsComponent extends Component
             'transactions' => $transactions,
             'subtotal' => (float) $row->subtotal,
             'discount' => (float) $row->discount,
-            'tax' => (float) $row->tax,
             'revenue' => (float) $row->revenue,
             'average' => $transactions > 0 ? (float) $row->revenue / $transactions : 0.0,
         ];

@@ -181,11 +181,6 @@
                         >
                     </div>
 
-                    <div class="flex justify-between">
-                        <span>IVA ({{ rtrim(rtrim(number_format($taxRate, 2), '0'), '.') }}%)</span>
-                        <span class="font-semibold text-slate-800">${{ number_format($this->tax, 2) }}</span>
-                    </div>
-
                     <hr class="border-slate-100 my-2">
 
                     <div class="flex justify-between text-lg font-extrabold text-slate-900">
@@ -217,6 +212,12 @@
                             target="_blank"
                             class="font-semibold text-slate-500 hover:text-blue-600 transition"
                         >Abrir en pestaña</a>
+                        <span class="text-slate-300">|</span>
+                        <a
+                            href="{{ route('receipt', ['sale' => $lastSaleId, 'formato' => 'carta']) }}"
+                            target="_blank"
+                            class="font-semibold text-slate-500 hover:text-blue-600 transition"
+                        >Factura en hoja</a>
                     </div>
                 @endif
             </div>

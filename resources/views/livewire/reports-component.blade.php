@@ -156,7 +156,6 @@
                             <th class="p-4">Fecha</th>
                             <th class="p-4 text-center">Pago</th>
                             <th class="p-4 text-right">Subtotal</th>
-                            <th class="p-4 text-right">IVA</th>
                             <th class="p-4 text-right">Total</th>
                             <th class="p-4 text-center">Detalle</th>
                         </tr>
@@ -172,7 +171,6 @@
                                     </span>
                                 </td>
                                 <td class="p-4 text-right">${{ number_format($sale->subtotal, 2) }}</td>
-                                <td class="p-4 text-right text-slate-500">${{ number_format($sale->tax, 2) }}</td>
                                 <td class="p-4 text-right font-bold text-slate-900">${{ number_format($sale->total, 2) }}</td>
                                 <td class="p-4 text-center whitespace-nowrap">
                                     <button type="button" wire:click="toggleSale({{ $sale->id }})" class="text-blue-600 hover:text-blue-800 font-semibold text-xs">
@@ -180,14 +178,18 @@
                                     </button>
                                     <span class="text-slate-300 mx-1">|</span>
                                     <a href="{{ route('receipt', $sale->id) }}" target="_blank" class="text-slate-500 hover:text-blue-600 font-semibold text-xs">
-                                        Comprobante
+                                        Tirilla
+                                    </a>
+                                    <span class="text-slate-300 mx-1">|</span>
+                                    <a href="{{ route('receipt', ['sale' => $sale->id, 'formato' => 'carta']) }}" target="_blank" class="text-slate-500 hover:text-blue-600 font-semibold text-xs">
+                                        Factura
                                     </a>
                                 </td>
                             </tr>
 
                             @if ($expandedSaleId === $sale->id)
                                 <tr wire:key="sale-detail-{{ $sale->id }}" class="bg-slate-50">
-                                    <td colspan="7" class="p-4">
+                                    <td colspan="6" class="p-4">
                                         <table class="w-full text-xs">
                                             <thead>
                                                 <tr class="text-slate-400 uppercase tracking-wider">
@@ -220,7 +222,7 @@
                                 </tr>
                             @endif
                         @empty
-                            <tr><td colspan="7" class="p-10 text-center text-slate-400">Sin transacciones en el rango seleccionado.</td></tr>
+                            <tr><td colspan="6" class="p-10 text-center text-slate-400">Sin transacciones en el rango seleccionado.</td></tr>
                         @endforelse
                     </tbody>
                 </table>

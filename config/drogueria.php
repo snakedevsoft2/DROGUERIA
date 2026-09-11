@@ -67,8 +67,9 @@ return [
         // códigos, necesarias para las tildes y la ñ.
         'profile' => env('PRINTER_PROFILE', 'default'),
 
-        // Caracteres por línea en fuente A: 42 en rollo de 80mm, 32 en 58mm.
-        'columns' => (int) env('PRINTER_COLUMNS', 42),
+        // Caracteres por línea en fuente A. La tiquetera en uso da 48 en rollo
+        // de 80mm; otras Epson dan 42, y en 58mm son 32.
+        'columns' => (int) env('PRINTER_COLUMNS', 48),
 
         // Imprime al confirmar la venta, sin que el cajero tenga que pulsar
         // nada. La vista previa se sigue mostrando para reimprimir.

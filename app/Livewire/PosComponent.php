@@ -30,8 +30,6 @@ class PosComponent extends Component
 
     public string $paymentMethod = 'cash';
 
-    public float $taxRate = 19.0; // IVA Colombia
-
     public bool $showCheckout = false;
 
     /** Última venta registrada, para previsualizar o reimprimir. */
@@ -214,15 +212,9 @@ class PosComponent extends Component
     }
 
     #[Computed]
-    public function tax(): float
-    {
-        return round(($this->subtotal - $this->discountAmount) * ($this->taxRate / 100), 2);
-    }
-
-    #[Computed]
     public function total(): float
     {
-        return round($this->subtotal - $this->discountAmount + $this->tax, 2);
+        return round($this->subtotal - $this->discountAmount, 2);
     }
 
     #[Computed]
@@ -348,7 +340,7 @@ class PosComponent extends Component
                 $sale = Sale::create([
                     'invoice_number' => 'TMP-'.uniqid(),
                     'subtotal' => $this->subtotal,
-                    'tax' => $this->tax,
+                    'tax' => 0,
                     'discount' => $this->discountAmount,
                     'total' => $this->total,
                     'paid_amount' => (float) $this->paidAmount,

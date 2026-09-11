@@ -18,9 +18,6 @@ use Illuminate\Support\Carbon;
  */
 class DemoSeeder extends Seeder
 {
-    /** Porcentaje de IVA con el que trabaja el punto de venta. */
-    protected const TAX_RATE = 19.0;
-
     /**
      * barcode, nombre, presentación, costo, precio, mínimo, fórmula médica.
      *
@@ -237,8 +234,7 @@ class DemoSeeder extends Seeder
 
         // Un descuento ocasional, para que el reporte no muestre siempre cero.
         $discount = random_int(1, 10) === 1 ? round($subtotal * 0.05, 2) : 0.0;
-        $tax = round(($subtotal - $discount) * (self::TAX_RATE / 100), 2);
-        $total = round($subtotal - $discount + $tax, 2);
+        $total = round($subtotal - $discount, 2);
 
         // En efectivo se paga con billete redondo; con tarjeta, el monto exacto.
         $paid = $method === 'cash'
@@ -248,7 +244,7 @@ class DemoSeeder extends Seeder
         $sale = Sale::create([
             'invoice_number' => 'TMP-'.uniqid(),
             'subtotal' => $subtotal,
-            'tax' => $tax,
+            'tax' => 0,
             'discount' => $discount,
             'total' => $total,
             'paid_amount' => $paid,

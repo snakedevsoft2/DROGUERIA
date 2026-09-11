@@ -4,8 +4,9 @@
 
     $methods = ['cash' => 'EFECTIVO', 'card' => 'TARJETA', 'transfer' => 'TRANSFERENCIA'];
 
-    // Mismo formato que usa el POS en pantalla, para que cuadren a la vista.
-    $money = fn ($value) => '$'.number_format((float) $value, 2);
+    // Formato colombiano: miles con punto y sin decimales. Las cifras del
+    // rollo son angostas, y los centavos no existen en caja.
+    $money = fn ($value) => '$'.number_format((float) $value, 0, ',', '.');
 @endphp
 <!DOCTYPE html>
 <html lang="es">
@@ -27,14 +28,16 @@
 
         body {
             margin: 0;
-            padding: 4mm 3mm;
+            padding: 4mm 2.5mm;
             width: {{ $width }};
             background: #fff;
             color: #000;
             /* Monoespaciada: las columnas de precios quedan alineadas. */
             font-family: 'Consolas', 'DejaVu Sans Mono', 'Courier New', monospace;
-            font-size: 11px;
-            line-height: 1.35;
+            /* En mm y no en px: así la tirilla en pantalla cae en las mismas
+               48 columnas por línea que imprime la tiquetera de 80mm. */
+            font-size: 2.5mm;
+            line-height: 1.3;
             -webkit-font-smoothing: none;
         }
 
@@ -55,13 +58,13 @@
         }
 
         .store-name {
-            font-size: 15px;
+            font-size: 1.5em;
             font-weight: 700;
             letter-spacing: .5px;
             margin-bottom: 2px;
         }
 
-        .muted { font-size: 10px; }
+        .muted { font-size: .92em; }
 
         .rule {
             border: 0;
@@ -72,6 +75,9 @@
         table {
             width: 100%;
             border-collapse: collapse;
+            /* Fijo: las columnas conservan su ancho renglón a renglón, sin
+               importar qué tan largo sea el nombre del producto. */
+            table-layout: fixed;
         }
 
         th, td {
@@ -80,24 +86,32 @@
         }
 
         thead th {
-            font-size: 10px;
+            font-size: .92em;
             border-bottom: 1px solid #000;
             padding-bottom: 2px;
         }
 
-        .col-qty   { width: 12%; }
-        .col-price { width: 26%; }
-        .col-total { width: 28%; }
+        .col-qty   { width: 18%; }
+        .col-price { width: 40%; }
+        .col-total { width: 42%; }
+
+        /* Cada producto (nombre + cifras) viaja junto y no se parte entre
+           páginas ni entre hojas del rollo. */
+        .item { page-break-inside: avoid; break-inside: avoid; }
 
         .item-name {
             padding-top: 3px;
             word-break: break-word;
+            overflow-wrap: anywhere;
         }
+
+        /* Las cifras nunca se parten: si no caben, encogen el nombre. */
+        .col-qty, .col-price, .col-total { white-space: nowrap; }
 
         .totals td { padding: 1px 0; }
 
         .grand td {
-            font-size: 14px;
+            font-size: 1.3em;
             font-weight: 700;
             border-top: 1px solid #000;
             border-bottom: 1px solid #000;
@@ -106,7 +120,7 @@
 
         .footer {
             margin-top: 8px;
-            font-size: 10px;
+            font-size: .92em;
         }
 
         /* Corte de papel: espacio en blanco al final del rollo. */
@@ -117,8 +131,17 @@
             text-align: center;
         }
 
-        .toolbar button {
-            font: inherit;
+        .toolbar a {
+            display: inline-block;
+            color: #000;
+            text-decoration: none;
+        }
+
+        .toolbar button,
+        .toolbar a {
+            /* Fuera del rollo: tamaño de pantalla, no el de la tirilla. */
+            font-family: inherit;
+            font-size: 12px;
             padding: 6px 14px;
             margin: 0 2px;
             border: 1px solid #000;
@@ -128,7 +151,7 @@
 
         @media print {
             .no-print { display: none !important; }
-            body { padding: 0 3mm; }
+            body { padding: 0 2.5mm; }
         }
     </style>
 </head>
@@ -196,8 +219,9 @@
                 <th class="col-total right">Total</th>
             </tr>
         </thead>
-        <tbody>
-            @foreach ($lines as $line)
+        @foreach ($lines as $line)
+            {{-- Un tbody por producto: nombre y cifras no se separan nunca. --}}
+            <tbody class="item">
                 {{-- Nombre en su propia fila: en 80mm no cabe junto a las cifras. --}}
                 <tr>
                     <td colspan="3" class="item-name">
@@ -209,13 +233,17 @@
                     <td class="col-price right">{{ $money($line->unit_price) }}</td>
                     <td class="col-total right bold">{{ $money($line->subtotal) }}</td>
                 </tr>
-            @endforeach
-        </tbody>
+            </tbody>
+        @endforeach
     </table>
 
     <hr class="rule">
 
     <table class="totals">
+        <colgroup>
+            <col style="width:52%">
+            <col style="width:48%">
+        </colgroup>
         <tr>
             <td>Subtotal</td>
             <td class="right">{{ $money($sale->subtotal) }}</td>
@@ -227,11 +255,6 @@
                 <td class="right">-{{ $money($sale->discount) }}</td>
             </tr>
         @endif
-
-        <tr>
-            <td>IVA</td>
-            <td class="right">{{ $money($sale->tax) }}</td>
-        </tr>
 
         <tr class="grand">
             <td class="upper">Total</td>
@@ -265,6 +288,7 @@
     @unless ($embedded)
         <div class="toolbar no-print">
             <button type="button" onclick="window.print()">Imprimir</button>
+            <a href="{{ route('receipt', ['sale' => $sale->id, 'formato' => 'carta']) }}">Ver en hoja carta</a>
             <button type="button" onclick="window.close()">Cerrar</button>
         </div>
     @endunless

@@ -12,7 +12,11 @@ class ReceiptController extends Controller
     {
         $sale->load(['details.product', 'user']);
 
-        return view('pdf.invoice', [
+        // Dos presentaciones del mismo comprobante: la tirilla de 80mm para la
+        // tiquetera y una factura en hoja carta para la impresora de oficina.
+        $sheet = $request->query('formato') === 'carta';
+
+        return view($sheet ? 'pdf.invoice-sheet' : 'pdf.invoice', [
             'sale' => $sale,
             'lines' => $this->lines($sale),
             // Sólo se imprime solo si se pide explícitamente (?print=1).

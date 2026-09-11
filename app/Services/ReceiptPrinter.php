@@ -317,8 +317,6 @@ class ReceiptPrinter
             $printer->text($this->columnsLine('Descuento', '-'.$this->money($sale->discount)));
         }
 
-        $printer->text($this->columnsLine('IVA', $this->money($sale->tax)));
-
         $printer->text($this->rule('='));
 
         // El total va a doble alto: es lo único que el cliente busca de lejos.
@@ -411,10 +409,10 @@ class ReceiptPrinter
             ->values();
     }
 
-    /** Mismo formato de moneda que el comprobante en pantalla. */
+    /** Mismo formato de moneda que el comprobante: miles con punto, sin centavos. */
     protected function money(float|int|string $value): string
     {
-        return '$'.number_format((float) $value, 2);
+        return '$'.number_format((float) $value, 0, ',', '.');
     }
 
     protected function rule(string $char = '-'): string
