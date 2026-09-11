@@ -231,6 +231,7 @@ namespace Drogueria
         private readonly string _carpetaBase;
         private readonly StringBuilder _salida = new StringBuilder();
         private readonly object _candado = new object();
+        private readonly TrabajoWindows _trabajo = new TrabajoWindows();
         private Process _proceso;
 
         public int Puerto { get; private set; }
@@ -329,6 +330,14 @@ namespace Drogueria
         }
 
         /// <summary>
+        /// ¿Se cayó PHP quejándose de que no pudo tomar el puerto?
+        /// </summary>
+        private bool SeQuejoDelPuerto()
+        {
+            return Salida.IndexOf("Failed to listen", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        /// <summary>
         /// Mata los php.exe de ESTA instalación que hayan quedado sueltos.
         ///
         /// Pasa cuando el programa muere sin cerrar bien: lo matan desde el
@@ -370,36 +379,125 @@ namespace Drogueria
         /// <summary>
         /// Levanta el servidor. Si ya había uno respondiendo (por ejemplo el
         /// del inicio automático de Windows), se reutiliza.
+        ///
+        /// El método es: lanzar y mirar qué pasa. Nada de comprobar antes si
+        /// el puerto "se puede usar".
+        ///
+        /// Ese atajo se probó y salió caro: la comprobación abría y cerraba
+        /// un socket en el mismo puerto justo antes de arrancar PHP, y
+        /// Windows tarda un instante en soltarlo. La propia comprobación era
+        /// lo que hacía fallar a PHP con "Failed to listen". Predecir si un
+        /// puerto va a funcionar es intrínsecamente frágil; observar lo que
+        /// pasó, no.
+        ///
+        /// Si PHP se queja del puerto, se prueba el siguiente. El número es
+        /// un detalle interno: nada de lo que ve el cajero depende de que
+        /// sea el 8347.
         /// </summary>
         public void Iniciar()
         {
+            const int cuantosPuertos = 8;
+            const int intentosPorPuerto = 2;
+
+            int primero = Puerto;
+
             if (Responde())
             {
                 return;
             }
 
-            // El puerto está cogido pero lo que hay detrás no contesta como
-            // el punto de venta: casi siempre es un servidor huérfano de una
-            // sesión anterior que no se cerró bien.
-            if (PuertoOcupado())
+            // Un servidor huérfano de una sesión que no se cerró bien sigue
+            // agarrado al puerto. Si hay algo ahí que no contesta como el
+            // punto de venta, se limpia antes de empezar.
+            if (PuertoOcupado() && LimpiarHuerfanos() > 0)
             {
-                if (LimpiarHuerfanos() > 0)
-                {
-                    System.Threading.Thread.Sleep(1200);
-                }
+                System.Threading.Thread.Sleep(1000);
 
-                if (PuertoOcupado())
+                if (Responde())
                 {
-                    throw new InvalidOperationException(
-                        "El puerto " + Puerto + " lo está usando otro programa de este equipo.\n\n" +
-                        "Para que el punto de venta use otro puerto, abra con el Bloc de\n" +
-                        "notas el archivo:\n\n" +
-                        "    " + Path.Combine(_carpetaBase, "puerto.txt") + "\n\n" +
-                        "escriba otro número (por ejemplo 8348), guarde y vuelva a abrir\n" +
-                        "el programa.");
+                    return;
                 }
             }
 
+            for (int salto = 0; salto < cuantosPuertos; salto++)
+            {
+                Puerto = primero + salto;
+
+                if (Puerto > 65500)
+                {
+                    break;
+                }
+
+                for (int intento = 1; intento <= intentosPorPuerto; intento++)
+                {
+                    ReiniciarSalida();
+                    LanzarProceso();
+
+                    if (!MurioAlArrancar())
+                    {
+                        return;
+                    }
+
+                    // Si no fue por el puerto, cambiar de puerto no arregla
+                    // nada: el error real está en la salida y hay que
+                    // enseñarlo tal cual.
+                    if (!SeQuejoDelPuerto())
+                    {
+                        return;
+                    }
+
+                    // Mismo puerto una segunda vez: si sólo era que Windows
+                    // no lo había soltado del todo, un respiro basta.
+                    if (intento < intentosPorPuerto)
+                    {
+                        System.Threading.Thread.Sleep(1500);
+                    }
+                }
+            }
+
+            // Agotados todos: se deja el puerto original en el mensaje, que
+            // es el que el usuario reconoce.
+            Puerto = primero;
+        }
+
+        /// <summary>
+        /// Espera un instante a ver si el proceso recién lanzado se cae solo.
+        /// </summary>
+        private bool MurioAlArrancar()
+        {
+            for (int i = 0; i < 16; i++)
+            {
+                System.Threading.Thread.Sleep(125);
+
+                if (Responde())
+                {
+                    return false;
+                }
+
+                if (Murio())
+                {
+                    return true;
+                }
+            }
+
+            // Sigue vivo y todavía arrancando: no es un fallo de arranque.
+            return false;
+        }
+
+        /// <summary>
+        /// Olvida la salida del intento anterior, para que un fallo pasajero
+        /// ya superado no acabe mezclado en el mensaje de error final.
+        /// </summary>
+        private void ReiniciarSalida()
+        {
+            lock (_candado)
+            {
+                _salida.Clear();
+            }
+        }
+
+        private void LanzarProceso()
+        {
             string php = Path.Combine(_carpetaBase, @"php\php.exe");
             string appDir = Path.Combine(_carpetaBase, "app");
 
@@ -422,6 +520,10 @@ namespace Drogueria
             _proceso.ErrorDataReceived += Acumular;
 
             _proceso.Start();
+
+            // Que Windows se encargue de matarlo si este programa muere sin
+            // poder hacerlo él mismo.
+            _trabajo.Adoptar(_proceso);
 
             // Hay que leer las dos salidas: si se redirigen y no se vacían,
             // el búfer se llena y PHP se queda bloqueado a media jornada.
@@ -516,6 +618,14 @@ namespace Drogueria
                 // Si no se deja matar, el proceso queda huérfano pero no
                 // impide cerrar la ventana; "Cerrar programa.bat" lo remata.
             }
+
+            // Se espera a que Windows suelte el puerto de verdad. Sin esto,
+            // cerrar y volver a abrir enseguida hace que el servidor nuevo
+            // se encuentre el puerto a medio liberar y no pueda arrancar.
+            for (int i = 0; i < 20 && PuertoOcupado(); i++)
+            {
+                System.Threading.Thread.Sleep(150);
+            }
         }
     }
 
@@ -599,9 +709,25 @@ namespace Drogueria
 
                 if (string.IsNullOrWhiteSpace(detalle))
                 {
-                    detalle = "PHP no escribió ningún mensaje.\n\n" +
-                              "Pruebe a ejecutar \"Iniciar (modo diagnostico).bat\"\n" +
-                              "en la carpeta del programa.";
+                    detalle = "PHP no escribió ningún mensaje.";
+                }
+
+                if (detalle.IndexOf("Failed to listen", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    detalle +=
+                        "\n\nEl puerto " + _servidor.Puerto + " no estaba libre." +
+                        "\n\nQué hacer:" +
+                        "\n  1. Espere medio minuto y vuelva a abrir el programa." +
+                        "\n     (si acaba de cerrarlo, Windows todavía no ha soltado" +
+                        "\n      el puerto del todo)" +
+                        "\n\n  2. Si sigue igual, abra con el Bloc de notas el archivo" +
+                        "\n     puerto.txt de la carpeta del programa, escriba otro" +
+                        "\n     número como 8348, guarde y vuelva a abrirlo.";
+                }
+                else
+                {
+                    detalle += "\n\nPara ver más detalles, ejecute " +
+                               "\"Iniciar (modo diagnostico).bat\"\nen la carpeta del programa.";
                 }
 
                 MostrarError("El programa no alcanzó a iniciar", detalle);

@@ -286,6 +286,42 @@ if ($ini -notmatch '(?m)^display_errors\s*=\s*Off') { Mal 'php.ini muestra los e
 if ($fallos.Count -eq 0) { Bien 'php.ini correcto.' }
 
 
+# --- 7. Que el paquete no dependa de nada preinstalado ---------------------
+#
+# Estas piezas las añade construir-paquete.ps1, así que sobre el
+# repositorio todavía no existen: aquí sólo se avisa. La comprobación que
+# de verdad manda la hace el constructor cuando ya las ha puesto.
+
+Titulo '7. Autonomía en un equipo recién formateado'
+
+$paquete = "$env:USERPROFILE\Drogueria-USB\recursos"
+
+if (-not (Test-Path (Join-Path $paquete 'php\php.exe'))) {
+    Ojo 'No hay un paquete armado; el constructor lo comprobará al armarlo.'
+} else {
+    $ausentes = @()
+
+    # php.exe depende de estas y el .zip oficial de PHP no las trae. En un
+    # Windows recién instalado no están y PHP ni arranca.
+    foreach ($dll in @('vcruntime140.dll', 'vcruntime140_1.dll', 'msvcp140.dll')) {
+        if (-not (Test-Path (Join-Path $paquete "php\$dll"))) { $ausentes += $dll }
+    }
+
+    foreach ($pieza in @('Drogueria.exe', 'WebView2Loader.dll',
+                         'Microsoft.Web.WebView2.Core.dll',
+                         'Microsoft.Web.WebView2.WinForms.dll')) {
+        if (-not (Test-Path (Join-Path $paquete "scripts\$pieza"))) { $ausentes += $pieza }
+    }
+
+    if ($ausentes.Count -gt 0) {
+        Ojo ('El paquete de ' + $paquete + ' está desactualizado; le faltan: ' +
+             ($ausentes -join ', '))
+    } else {
+        Bien 'El paquete armado no depende de nada preinstalado.'
+    }
+}
+
+
 # --- Resultado --------------------------------------------------------------
 
 Write-Host ''

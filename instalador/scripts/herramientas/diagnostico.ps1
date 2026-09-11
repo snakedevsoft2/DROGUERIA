@@ -33,6 +33,28 @@ if (Test-Path -LiteralPath $archivoPuerto) {
     }
 }
 
+# Si el puerto de siempre no admite un enlace nuevo —lo tiene otro
+# programa, o acaba de cerrarse y Windows aún no lo ha soltado— se coge el
+# siguiente que sí. Es lo mismo que hace Drogueria.exe: el número de puerto
+# es un detalle interno y no vale la pena quedarse sin programa por él.
+function SePuedeEnlazar($n) {
+    $oyente = $null
+    try {
+        $oyente = New-Object System.Net.Sockets.TcpListener([System.Net.IPAddress]::Loopback, $n)
+        $oyente.Start()
+        return $true
+    } catch {
+        return $false
+    } finally {
+        if ($oyente) { try { $oyente.Stop() } catch { } }
+    }
+}
+
+$original = $puerto
+for ($i = 0; $i -lt 12; $i++) {
+    if (SePuedeEnlazar ($original + $i)) { $puerto = $original + $i; break }
+}
+
 $url = "http://127.0.0.1:$puerto"
 
 Write-Host ''

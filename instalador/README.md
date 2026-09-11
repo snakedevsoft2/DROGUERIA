@@ -43,6 +43,28 @@ Sin `-Usb` sólo arma la carpeta (`%USERPROFILE%\Drogueria-USB`). Con
 Reinstalar encima de una instalación existente **conserva** la base de
 datos y el `.env`: sirve para actualizar al cliente sin perderle las ventas.
 
+## Compatibilidad: qué necesita el equipo del cliente
+
+**Nada preinstalado.** El paquete lleva su propio PHP, sus dependencias y
+sus bibliotecas. No hace falta internet ni en la instalación ni en el uso.
+
+Requisitos reales, todos comprobados por el instalador, que avisa con una
+explicación si alguno falla:
+
+| Requisito | Situación |
+|---|---|
+| Windows de **64 bits** | El instalador **aborta** si es de 32; PHP es x64 |
+| **.NET Framework 4.6.2+** | Windows 10 lo trae desde 2016 y Windows 11 siempre. Si falta, avisa y deja usar el modo diagnóstico |
+| **WebView2 Runtime** | De fábrica en Windows 11. Si falta, el programa lo detecta y ofrece abrirse en el navegador |
+| Visual C++ Redistributable | **Ya no hace falta**: las tres DLL que PHP necesita viajan junto a `php.exe` |
+
+Ese último punto era un fallo real. El `.zip` oficial de PHP **no incluye**
+`vcruntime140.dll`, `vcruntime140_1.dll` ni `msvcp140.dll`: da por hecho que
+el equipo tiene instalado el redistribuible de Visual C++. En un Windows
+recién formateado no está y **PHP ni arranca**. Ahora se copian junto a
+`php.exe`, donde Windows busca primero, y `construir-paquete.ps1` **aborta
+la construcción** si no las encuentra.
+
 ## Decisiones y por qué
 
 ### SQLite en vez de MySQL
@@ -84,7 +106,41 @@ Qué resuelve, además de la apariencia:
   otro servidor sobre el mismo puerto; en su lugar trae al frente la ventana
   abierta.
 - **Cierra lo que abre.** Al cerrar la ventana mata el proceso de PHP y sus
-  hijos, así el siguiente arranque no encuentra el puerto ocupado.
+  hijos. Y por si muere de malas maneras —lo matan desde el Administrador
+  de tareas, se cuelga, se va la luz—, el hijo va dentro de un **objeto Job
+  de Windows** con `KILL_ON_JOB_CLOSE`: el sistema operativo se lo lleva por
+  delante pase lo que pase. Sin eso, el `php.exe` huérfano se queda con el
+  puerto y el siguiente arranque falla con *"Failed to listen on
+  127.0.0.1:8347"*.
+- **Se recupera de un puerto ocupado.** Si al arrancar hay algo en el puerto
+  que no responde como el punto de venta, mata los `php.exe` huérfanos de su
+  propia carpeta —sólo los suyos, no los de un XAMPP ajeno—. Si aun así PHP
+  se queja del puerto, prueba el siguiente, hasta ocho. El número de puerto
+  es un detalle interno y nada de lo que ve el cajero depende de que sea el
+  8347.
+
+### No preguntar si un puerto "se puede usar": lanzarlo y mirar
+
+Esto costó tres intentos fallidos, y merece quedar escrito.
+
+La primera versión comprobaba el puerto abriendo una **conexión** de prueba,
+que responde a *"¿hay alguien escuchando?"*. No es la pregunta: un puerto sin
+nadie escuchando puede no admitir un enlace nuevo si acaba de cerrarse y
+Windows todavía lo retiene.
+
+La segunda versión lo "arregló" comprobando con un **enlace** de prueba —
+abrir un socket y cerrarlo justo antes de arrancar PHP. Salió peor: Windows
+tarda un instante en soltar ese socket, así que **la propia comprobación era
+lo que hacía fallar a PHP**. El síntoma era desconcertante: fallaba siempre
+desde el programa y nunca al arrancar el servidor a mano.
+
+La versión que funciona no comprueba nada antes. Lanza PHP, espera dos
+segundos, y mira qué pasó: si responde, listo; si murió quejándose del
+puerto, prueba el siguiente; si murió por otra cosa, enseña el error real sin
+cambiar de puerto, porque cambiarlo no arreglaría nada.
+
+Predecir si una operación va a funcionar es frágil cuando la predicción
+tiene efectos secundarios. Observar lo que pasó, no.
 - **Sin intérpretes de por medio.** El acceso directo apunta al `.exe`
   directamente, así que ni `wscript.exe` ni las políticas de scripts de
   Windows pueden estorbar.

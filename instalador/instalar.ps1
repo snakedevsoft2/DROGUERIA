@@ -84,6 +84,58 @@ if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
     Write-Host ''
 }
 
+# La ventana del programa está hecha con .NET Framework 4.6.2, que es lo
+# que exigen las bibliotecas de WebView2. Windows 10 lo trae desde la
+# actualización de agosto de 2016 y Windows 11 siempre; en algo más viejo
+# el .exe no arrancaría y Windows daría un diálogo que no explica nada.
+$releaseNet = 0
+$claveNet = 'HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full'
+
+if (Test-Path $claveNet) {
+    $releaseNet = [int](Get-ItemProperty $claveNet -ErrorAction SilentlyContinue).Release
+}
+
+if ($releaseNet -lt 394802) {
+    Aviso 'Este Windows tiene una versión antigua de .NET Framework.'
+    Write-Host ''
+    Write-Host '  La ventana del programa necesita .NET Framework 4.6.2 o' -ForegroundColor Gray
+    Write-Host '  posterior. Actualice Windows, o instale (una sola vez):' -ForegroundColor Gray
+    Write-Host '    https://dotnet.microsoft.com/download/dotnet-framework' -ForegroundColor White
+    Write-Host ''
+    Write-Host '  Se puede instalar igual: si el programa no abriera, queda' -ForegroundColor Gray
+    Write-Host '  "Iniciar (modo diagnostico).bat" para usarlo en el navegador.' -ForegroundColor Gray
+    Write-Host ''
+}
+
+# La ventana del programa usa WebView2. Windows 11 lo trae de fábrica y
+# Windows 10 lo recibe con las actualizaciones de Edge, pero en un equipo
+# sin actualizar puede faltar. No impide instalar: el programa lo detecta y
+# ofrece abrirse en el navegador. Pero conviene saberlo ANTES de estar
+# delante del cliente.
+$clavesWebView = @(
+    'HKLM:\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}',
+    'HKLM:\SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}'
+)
+
+$versionWebView = $null
+foreach ($clave in $clavesWebView) {
+    if (Test-Path $clave) {
+        $pv = (Get-ItemProperty $clave -ErrorAction SilentlyContinue).pv
+        if ($pv) { $versionWebView = $pv; break }
+    }
+}
+
+if (-not $versionWebView) {
+    Aviso 'Este equipo no tiene el "WebView2 Runtime" de Microsoft.'
+    Write-Host ''
+    Write-Host '  El programa se instalará y funcionará igual, pero se abrirá' -ForegroundColor Gray
+    Write-Host '  en el navegador en vez de en su propia ventana.' -ForegroundColor Gray
+    Write-Host ''
+    Write-Host '  Para la ventana propia, instale (una sola vez, con internet):' -ForegroundColor Gray
+    Write-Host '    https://go.microsoft.com/fwlink/p/?LinkId=2124703' -ForegroundColor White
+    Write-Host ''
+}
+
 
 # --- 1. Dónde instalar -----------------------------------------------------
 

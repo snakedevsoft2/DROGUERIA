@@ -186,6 +186,38 @@ Paso 'Aplicando el php.ini del punto de venta...'
 Copy-Item (Join-Path $PSScriptRoot 'php\php.ini') -Destination $php -Force
 Ok 'php.ini copiado.'
 
+# --- El runtime de Visual C++ que PHP necesita y no trae ---
+#
+# php.exe depende de vcruntime140.dll, vcruntime140_1.dll y msvcp140.dll, y
+# el .zip oficial de PHP NO las incluye: da por hecho que el equipo tiene
+# instalado el "Microsoft Visual C++ Redistributable". En un Windows recién
+# instalado no está, y PHP ni arranca.
+#
+# Se copian junto a php.exe porque Windows busca primero en la carpeta del
+# ejecutable. Así el programa no depende de nada preinstalado y el cliente
+# no tiene que instalar un redistribuible aparte.
+Paso 'Empaquetando el runtime de Visual C++...'
+
+$dllsVC = @('vcruntime140.dll', 'vcruntime140_1.dll', 'msvcp140.dll')
+$faltanVC = @()
+
+foreach ($dll in $dllsVC) {
+    $origenDll = Join-Path "$env:SystemRoot\System32" $dll
+
+    if (Test-Path $origenDll) {
+        Copy-Item $origenDll -Destination $php -Force
+    } else {
+        $faltanVC += $dll
+    }
+}
+
+if ($faltanVC.Count -gt 0) {
+    throw ("Este equipo no tiene las bibliotecas que PHP necesita: " +
+           ($faltanVC -join ', ') + "`n" +
+           "Instale el 'Microsoft Visual C++ Redistributable (x64)' y repita.")
+}
+Ok ("Runtime de Visual C++ incluido ($($dllsVC.Count) bibliotecas).")
+
 # Comprobación real: sin alguna de estas extensiones el programa no arranca
 # en el equipo del cliente y el error aparecería allá, no aquí.
 Paso 'Verificando las extensiones...'
@@ -347,6 +379,39 @@ if ($sospechosos.Count -gt 0) {
            ($sospechosos -join "`n  "))
 }
 Ok ('Los ' + $propios.Count + ' archivos .bat del instalador son ASCII puro.')
+
+# Comprobación final de autonomía: que el paquete no dé por hecho nada
+# instalado en el equipo del cliente. Va aquí, con todo ya en su sitio, y
+# no en revisar.ps1, que se ejecuta antes de armar nada.
+Paso 'Comprobando que no dependa de nada preinstalado...'
+
+$imprescindibles = @{
+    'php\php.exe'                                     = 'el motor'
+    'php\vcruntime140.dll'                            = 'runtime de VC++ (PHP no arranca sin él)'
+    'php\vcruntime140_1.dll'                          = 'runtime de VC++'
+    'php\msvcp140.dll'                                = 'runtime de VC++'
+    'php\php.ini'                                     = 'la configuración de PHP'
+    'scripts\Drogueria.exe'                           = 'la ventana del programa'
+    'scripts\WebView2Loader.dll'                      = 'WebView2 (nativo)'
+    'scripts\Microsoft.Web.WebView2.Core.dll'         = 'WebView2 (gestionado)'
+    'scripts\Microsoft.Web.WebView2.WinForms.dll'     = 'WebView2 (formularios)'
+    'app\vendor\autoload.php'                         = 'las dependencias de PHP'
+    'app\public\build\manifest.json'                  = 'los estilos compilados'
+    'app\database\migrations'                         = 'las migraciones'
+}
+
+$ausentes = @()
+foreach ($relativa in $imprescindibles.Keys) {
+    if (-not (Test-Path (Join-Path $recursos $relativa))) {
+        $ausentes += ("$relativa  ($($imprescindibles[$relativa]))")
+    }
+}
+
+if ($ausentes.Count -gt 0) {
+    throw ("Al paquete le faltan piezas imprescindibles:`n  " + ($ausentes -join "`n  "))
+}
+
+Ok 'El paquete es autónomo: no necesita nada preinstalado.'
 
 
 # --- 6. A la memoria USB ----------------------------------------------------
