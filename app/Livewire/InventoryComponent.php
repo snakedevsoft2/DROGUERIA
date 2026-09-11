@@ -229,6 +229,24 @@ class InventoryComponent extends Component
         $this->dispatch('toast', type: 'success', message: 'Producto guardado correctamente.');
     }
 
+    /** Activa o desactiva el producto desde la propia lista. */
+    public function toggleProduct(int $id): void
+    {
+        $product = Product::find($id);
+
+        if (! $product) {
+            return;
+        }
+
+        $product->update(['is_active' => ! $product->is_active]);
+
+        unset($this->products, $this->lowStockCount, $this->expiringCount, $this->expiredCount);
+
+        $this->dispatch('toast', type: 'success', message: $product->is_active
+            ? 'Producto activado.'
+            : 'Producto desactivado: deja de aparecer en el punto de venta.');
+    }
+
     public function confirmDelete(int $id): void
     {
         $this->confirmingProductId = $id;
@@ -331,6 +349,28 @@ class InventoryComponent extends Component
         unset($this->products, $this->lowStockCount, $this->expiringCount, $this->expiredCount);
 
         $this->dispatch('toast', type: 'success', message: 'Lote guardado correctamente.');
+    }
+
+    /**
+     * Activa o desactiva el lote. Un lote inactivo conserva su stock pero el
+     * punto de venta no lo toca: sirve para apartar mercancía vencida o en
+     * revisión sin perder el registro.
+     */
+    public function toggleBatch(int $id): void
+    {
+        $batch = Batch::find($id);
+
+        if (! $batch) {
+            return;
+        }
+
+        $batch->update(['is_active' => ! $batch->is_active]);
+
+        unset($this->products, $this->lowStockCount, $this->expiringCount, $this->expiredCount);
+
+        $this->dispatch('toast', type: 'success', message: $batch->is_active
+            ? 'Lote activado.'
+            : 'Lote desactivado: su stock ya no se vende.');
     }
 
     public function deleteBatch(int $id): void

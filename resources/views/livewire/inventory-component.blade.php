@@ -125,7 +125,10 @@
                                                 $expiration = \Illuminate\Support\Carbon::parse($batch->expiration_date);
                                                 $days = now()->startOfDay()->diffInDays($expiration, false);
                                             @endphp
-                                            <div wire:key="batch-{{ $batch->id }}" class="flex items-center gap-2 text-xs">
+                                            <div wire:key="batch-{{ $batch->id }}" @class([
+                                                'flex items-center gap-2 text-xs',
+                                                'opacity-50' => ! $batch->is_active,
+                                            ])>
                                                 <span @class([
                                                     'px-1.5 py-0.5 rounded font-semibold',
                                                     'bg-red-100 text-red-800' => $days <= 0,
@@ -137,14 +140,25 @@
                                                 <span class="text-slate-400">
                                                     {{ $expiration->format('d/m/Y') }} &middot; {{ $batch->stock }} u.
                                                     @if ($days <= 0) <span class="text-red-600 font-semibold">vencido</span> @endif
+                                                    @unless ($batch->is_active) <span class="text-slate-500 font-semibold">inactivo</span> @endunless
                                                 </span>
                                                 <button type="button" wire:click="editBatch({{ $batch->id }})" class="text-blue-500 hover:text-blue-700 font-semibold">editar</button>
+                                                {{-- Desactivar aparta el lote de la venta sin borrarlo. --}}
+                                                <button
+                                                    type="button"
+                                                    wire:click="toggleBatch({{ $batch->id }})"
+                                                    @class([
+                                                        'font-semibold',
+                                                        'text-amber-600 hover:text-amber-700' => $batch->is_active,
+                                                        'text-emerald-600 hover:text-emerald-700' => ! $batch->is_active,
+                                                    ])
+                                                >{{ $batch->is_active ? 'desactivar' : 'activar' }}</button>
                                                 <button
                                                     type="button"
                                                     wire:click="deleteBatch({{ $batch->id }})"
-                                                    wire:confirm="¿Eliminar el lote {{ $batch->batch_number }}?"
+                                                    wire:confirm="¿Eliminar el lote {{ $batch->batch_number }}? Se borra definitivamente."
                                                     class="text-red-400 hover:text-red-600 font-semibold"
-                                                >x</button>
+                                                >eliminar</button>
                                             </div>
                                         @empty
                                             <span class="text-xs text-slate-400">Sin lotes registrados</span>
@@ -156,11 +170,17 @@
                                     </div>
                                 </td>
                                 <td class="p-4 text-center">
-                                    <span @class([
-                                        'px-2 py-1 rounded-full text-xs font-semibold',
-                                        'bg-emerald-100 text-emerald-800' => $product->is_active,
-                                        'bg-slate-200 text-slate-600' => ! $product->is_active,
-                                    ])>{{ $product->is_active ? 'Activo' : 'Inactivo' }}</span>
+                                    {{-- El estado se cambia con un clic: no hay que abrir el formulario. --}}
+                                    <button
+                                        type="button"
+                                        wire:click="toggleProduct({{ $product->id }})"
+                                        title="{{ $product->is_active ? 'Desactivar producto' : 'Activar producto' }}"
+                                        @class([
+                                            'px-2 py-1 rounded-full text-xs font-semibold transition',
+                                            'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' => $product->is_active,
+                                            'bg-slate-200 text-slate-600 hover:bg-slate-300' => ! $product->is_active,
+                                        ])
+                                    >{{ $product->is_active ? 'Activo' : 'Inactivo' }}</button>
                                 </td>
                                 <td class="p-4 text-center whitespace-nowrap">
                                     <button type="button" wire:click="editProduct({{ $product->id }})" class="text-blue-600 hover:text-blue-800 font-semibold text-xs">Editar</button>
