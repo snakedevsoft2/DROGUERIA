@@ -48,15 +48,9 @@
         .muted  { color: #555; font-size: .88em; }
 
         /* Marco completo: todo el documento vive dentro de un recuadro. */
-        .marco {
-            border: 1.5px solid #1a1a1a;
-            padding: 0;
-        }
+        .marco { padding: 0; }
 
-        .cabecera {
-            border-bottom: 1.5px solid #1a1a1a;
-            padding: 7mm 7mm 5mm;
-        }
+        .cabecera { padding: 0 0 6mm; }
 
         .cabecera table { width: 100%; border-collapse: collapse; }
         .cabecera td { vertical-align: top; }
@@ -93,10 +87,7 @@
         }
 
         /* Datos de la venta en dos columnas con puntos guía. */
-        .datos {
-            padding: 5mm 7mm;
-            border-bottom: 1.5px solid #1a1a1a;
-        }
+        .datos { padding: 0 0 6mm; }
 
         .datos table { width: 100%; border-collapse: collapse; }
         .datos td { padding: 1.5px 0; }
@@ -113,22 +104,21 @@
             letter-spacing: 1.5px;
             text-transform: uppercase;
             text-align: left;
-            padding: 4mm 3mm 2mm;
-            border-bottom: 1px solid #1a1a1a;
+            font-weight: 700;
+            padding: 0 3mm 2mm;
         }
 
         .items td {
             padding: 2.4mm 3mm;
             vertical-align: top;
-            border-bottom: 1px dotted #b9b9b9;
         }
 
         .items tr { page-break-inside: avoid; break-inside: avoid; }
 
-        .c-item  { width: 9%;  text-align: right; padding-left: 7mm !important; }
+        .c-item  { width: 9%;  text-align: left; padding-left: 0 !important; }
         .c-name  { width: 61%; word-break: break-word; overflow-wrap: anywhere; }
         .c-qty   { width: 12%; text-align: right; white-space: nowrap; }
-        .c-total { width: 18%; text-align: right; white-space: nowrap; padding-right: 7mm !important; }
+        .c-total { width: 18%; text-align: right; white-space: nowrap; padding-right: 0 !important; }
 
         .presentation {
             display: block;
@@ -138,14 +128,13 @@
         }
 
         .totales {
-            padding: 4mm 7mm 5mm;
+            padding: 5mm 0 0;
             page-break-inside: avoid;
             break-inside: avoid;
         }
 
         .totales table {
             width: 88mm;
-            margin-left: auto;
             border-collapse: collapse;
             table-layout: fixed;
         }
@@ -155,11 +144,9 @@
 
         /* Doble línea sobre el total: convención de la factura impresa. */
         .totales .grand td {
-            border-top: 3px double #1a1a1a;
-            border-bottom: 1px solid #1a1a1a;
             font-size: 1.25em;
             font-weight: 700;
-            padding: 2.5mm 0;
+            padding: 3mm 0 1mm;
             letter-spacing: .5px;
         }
 
@@ -175,10 +162,7 @@
             font-size: .9em;
         }
 
-        .pie-hoja {
-            border-top: 1.5px solid #1a1a1a;
-            padding: 4mm 7mm 6mm;
-        }
+        .pie-hoja { padding: 6mm 0 0; }
 
         .nota { font-size: .84em; color: #444; }
 
@@ -190,10 +174,10 @@
 
         .firmas td {
             width: 50%;
-            text-align: center;
+            text-align: left;
             font-size: .84em;
             color: #444;
-            padding: 0 6mm;
+            padding: 0 12mm 0 0;
         }
 
         .firmas .linea {
@@ -271,7 +255,7 @@
                                 <div class="muted">{{ $dato }}</div>
                             @endforeach
                         </td>
-                        <td class="right" style="width:62mm">
+                        <td style="width:62mm">
                             <div class="doc-tipo">Comprobante de venta</div>
                             <div class="doc-numero">{{ $sale->invoice_number }}</div>
                         </td>

@@ -221,6 +221,10 @@ La clave para borrar inventario es la de fábrica (<strong>1234</strong>). Cámb
                                     <a href="{{ route('receipt', ['sale' => $sale->id, 'formato' => 'carta']) }}" target="_blank" class="text-slate-500 hover:text-blue-600 font-semibold text-xs">
                                         Factura
                                     </a>
+                                    <span class="text-slate-300 mx-1">|</span>
+                                    <button type="button" wire:click="confirmDeleteSale({{ $sale->id }})" class="text-red-500 hover:text-red-700 font-semibold text-xs">
+                                        Eliminar
+                                    </button>
                                 </td>
                             </tr>
 
@@ -272,4 +276,36 @@ La clave para borrar inventario es la de fábrica (<strong>1234</strong>). Cámb
             @endif
         </div>
     </div>
+
+    {{-- Eliminar una venta: pide la clave del dueño y devuelve el stock. --}}
+    @if ($confirmingSaleId)
+        @php $ventaABorrar = \App\Models\Sale::find($confirmingSaleId); @endphp
+
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div class="absolute inset-0 bg-slate-900/50" wire:click="cancelDeleteSale"></div>
+
+            <form wire:submit="deleteSale" class="relative bg-white w-full max-w-sm rounded-2xl shadow-2xl p-6 text-center">
+                <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-red-50 flex items-center justify-center text-2xl">&#9888;</div>
+
+                <h3 class="font-bold text-slate-800 mb-2">¿Eliminar la venta {{ $ventaABorrar?->invoice_number }}?</h3>
+                <p class="text-sm text-slate-500 mb-5">
+                    Se borra del historial por ${{ number_format($ventaABorrar?->total ?? 0, 0, ',', '.') }} y las unidades vuelven a su lote en el inventario.
+                </p>
+
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 text-left">Clave de administrador</label>
+                <input
+                    type="password"
+                    wire:model="deletePassword"
+                    autofocus
+                    class="w-full px-3 py-2.5 mb-1 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-sm text-center tracking-widest"
+                >
+                @error('deletePassword') <p class="text-xs text-red-600 mb-2 text-left">{{ $message }}</p> @enderror
+
+                <div class="flex gap-3 mt-4">
+                    <button type="button" wire:click="cancelDeleteSale" class="flex-1 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-semibold hover:bg-slate-50 transition">Cancelar</button>
+                    <button type="submit" class="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold transition">Eliminar</button>
+                </div>
+            </form>
+        </div>
+    @endif
 </div>

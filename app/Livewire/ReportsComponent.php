@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\Batch;
 use App\Models\Sale;
 use App\Models\SaleDetail;
 use App\Support\AdminPassword;
@@ -53,6 +54,66 @@ class ReportsComponent extends Component
     public function usingDefaultPassword(): bool
     {
         return AdminPassword::isDefault();
+    }
+
+    // --- Eliminar una venta del historial ---
+
+    public ?int $confirmingSaleId = null;
+
+    public string $deletePassword = '';
+
+    public function confirmDeleteSale(int $id): void
+    {
+        $this->confirmingSaleId = $id;
+        $this->deletePassword = '';
+        $this->resetValidation();
+    }
+
+    public function cancelDeleteSale(): void
+    {
+        $this->confirmingSaleId = null;
+        $this->deletePassword = '';
+        $this->resetValidation();
+    }
+
+    /**
+     * Borra una venta del historial. Pide la clave del dueño y devuelve las
+     * unidades a su lote: si la venta se anula, la mercancía no se vendió y
+     * tiene que volver al inventario.
+     */
+    public function deleteSale(): void
+    {
+        if (! AdminPassword::check($this->deletePassword)) {
+            $this->addError('deletePassword', 'Clave incorrecta.');
+            $this->deletePassword = '';
+
+            return;
+        }
+
+        $sale = Sale::with('details')->find($this->confirmingSaleId);
+        $factura = $sale?->invoice_number;
+        $this->cancelDeleteSale();
+
+        if (! $sale) {
+            return;
+        }
+
+        DB::transaction(function () use ($sale) {
+            foreach ($sale->details as $detail) {
+                // El lote puede haberse borrado del inventario; en ese caso no
+                // hay dónde devolver las unidades.
+                if ($detail->batch_id) {
+                    Batch::where('id', $detail->batch_id)->increment('stock', (int) $detail->quantity);
+                }
+            }
+
+            $sale->delete();
+        });
+
+        $this->resetPage();
+        unset($this->summary, $this->byPaymentMethod, $this->topProducts, $this->daily);
+
+        $this->dispatch('toast', type: 'success', message: "Venta {$factura} eliminada; el stock volvió al inventario.");
     }
 
     public function changePassword(): void
