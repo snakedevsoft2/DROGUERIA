@@ -221,12 +221,44 @@
     {{-- Modal producto --}}
     @if ($showProductModal)
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
-            <div class="absolute inset-0 bg-slate-900/50" wire:click="$set('showProductModal', false)"></div>
+            {{-- El fondo no cierra el formulario: un clic afuera borraba todo lo
+                 que se llevaba escrito. Se sale con Cancelar o con la X. --}}
+            <div class="absolute inset-0 bg-slate-900/50"></div>
 
-            <form wire:submit="saveProduct" class="relative bg-white w-full max-w-2xl rounded-2xl shadow-2xl my-8">
+            <form
+                wire:submit="saveProduct"
+                class="relative bg-white w-full max-w-2xl rounded-2xl shadow-2xl my-8"
+                x-data="{
+                    /* Si ya se escribió algo, salir pide confirmación: el
+                       formulario solo se cierra cuando el usuario lo decide. */
+                    tocado: false,
+                    cerrar() {
+                        if (this.tocado && ! confirm('Se perderá lo que escribió en este producto. ¿Salir de todas formas?')) {
+                            return
+                        }
+
+                        $wire.set('showProductModal', false)
+                    },
+                    /* El lector de código de barras termina cada lectura con un
+                       Enter. Sin esto ese Enter guardaba el producto a medias,
+                       así que aquí solo pasa al campo siguiente. */
+                    siguienteCampo(actual) {
+                        const campos = [...$el.querySelectorAll('input, textarea, select')]
+                            .filter(campo => !campo.disabled && campo.type !== 'hidden')
+                        const siguiente = campos[campos.indexOf(actual) + 1]
+
+                        if (siguiente) {
+                            siguiente.focus()
+                            siguiente.select?.()
+                        }
+                    },
+                }"
+                x-on:keydown.enter="if (['INPUT', 'SELECT'].includes($event.target.tagName)) { $event.preventDefault(); siguienteCampo($event.target) }"
+                x-on:input="tocado = true"
+            >
                 <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
                     <h3 class="font-bold text-slate-800">{{ $productId ? 'Editar producto' : 'Nuevo producto' }}</h3>
-                    <button type="button" wire:click="$set('showProductModal', false)" class="text-slate-400 hover:text-slate-700 text-2xl leading-none">&times;</button>
+                    <button type="button" x-on:click="cerrar()" class="text-slate-400 hover:text-slate-700 text-2xl leading-none">&times;</button>
                 </div>
 
                 <div
@@ -331,7 +363,7 @@
                 </div>
 
                 <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex gap-3 justify-end rounded-b-2xl">
-                    <button type="button" wire:click="$set('showProductModal', false)" class="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-semibold hover:bg-white transition">Cancelar</button>
+                    <button type="button" x-on:click="cerrar()" class="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-semibold hover:bg-white transition">Cancelar</button>
                     <button type="submit" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition">
                         <span wire:loading.remove wire:target="saveProduct">Guardar</span>
                         <span wire:loading wire:target="saveProduct">Guardando...</span>
@@ -344,12 +376,38 @@
     {{-- Modal lote --}}
     @if ($showBatchModal)
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div class="absolute inset-0 bg-slate-900/50" wire:click="$set('showBatchModal', false)"></div>
+            {{-- Igual que el de producto: el fondo no cierra nada. --}}
+            <div class="absolute inset-0 bg-slate-900/50"></div>
 
-            <form wire:submit="saveBatch" class="relative bg-white w-full max-w-md rounded-2xl shadow-2xl">
+            <form
+                wire:submit="saveBatch"
+                class="relative bg-white w-full max-w-md rounded-2xl shadow-2xl"
+                x-data="{
+                    tocado: false,
+                    cerrar() {
+                        if (this.tocado && ! confirm('Se perderá lo que escribió en este lote. ¿Salir de todas formas?')) {
+                            return
+                        }
+
+                        $wire.set('showBatchModal', false)
+                    },
+                    siguienteCampo(actual) {
+                        const campos = [...$el.querySelectorAll('input, textarea, select')]
+                            .filter(campo => !campo.disabled && campo.type !== 'hidden')
+                        const siguiente = campos[campos.indexOf(actual) + 1]
+
+                        if (siguiente) {
+                            siguiente.focus()
+                            siguiente.select?.()
+                        }
+                    },
+                }"
+                x-on:keydown.enter="if (['INPUT', 'SELECT'].includes($event.target.tagName)) { $event.preventDefault(); siguienteCampo($event.target) }"
+                x-on:input="tocado = true"
+            >
                 <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
                     <h3 class="font-bold text-slate-800">{{ $batchId ? 'Editar lote' : 'Nuevo lote' }}</h3>
-                    <button type="button" wire:click="$set('showBatchModal', false)" class="text-slate-400 hover:text-slate-700 text-2xl leading-none">&times;</button>
+                    <button type="button" x-on:click="cerrar()" class="text-slate-400 hover:text-slate-700 text-2xl leading-none">&times;</button>
                 </div>
 
                 <div class="p-6 space-y-4">
@@ -378,7 +436,7 @@
                 </div>
 
                 <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex gap-3 justify-end rounded-b-2xl">
-                    <button type="button" wire:click="$set('showBatchModal', false)" class="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-semibold hover:bg-white transition">Cancelar</button>
+                    <button type="button" x-on:click="cerrar()" class="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-semibold hover:bg-white transition">Cancelar</button>
                     <button type="submit" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition">Guardar lote</button>
                 </div>
             </form>
