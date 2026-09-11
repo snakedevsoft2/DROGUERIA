@@ -98,7 +98,7 @@
         }
 
         .col-qty   { width: 25%; }
-        .col-total { width: 75%; }
+        .col-price { width: 75%; }
 
         /* Cada producto (nombre + cifras) viaja junto y no se parte entre
            páginas ni entre hojas del rollo. */
@@ -111,7 +111,7 @@
         }
 
         /* Las cifras nunca se parten: si no caben, encogen el nombre. */
-        .col-qty, .col-total { white-space: nowrap; }
+        .col-qty, .col-price { white-space: nowrap; }
 
         .totals td { padding: 1px 0; }
 
@@ -215,7 +215,7 @@
         <thead>
             <tr>
                 <th class="col-qty">Cant</th>
-                <th class="col-total right">Total</th>
+                <th class="col-price right">Precio</th>
             </tr>
         </thead>
         @foreach ($lines as $line)
@@ -229,7 +229,7 @@
                 </tr>
                 <tr>
                     <td class="col-qty">{{ $line->quantity }}</td>
-                    <td class="col-total right bold">{{ $money($line->subtotal) }}</td>
+                    <td class="col-price right bold">{{ $money($line->unit_price) }}</td>
                 </tr>
             </tbody>
         @endforeach

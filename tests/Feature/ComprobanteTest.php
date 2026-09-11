@@ -118,6 +118,7 @@ class ComprobanteTest extends TestCase
         $html = $this->get(route('receipt', $this->sale))->getContent();
 
         $this->assertSame(1, substr_count($html, 'Amoxicilina 500 mg'), 'El cliente debe ver una sola línea por producto.');
-        $this->assertStringContainsString('$37.500', $html);
+        // Las tres unidades quedan en un renglón, con el precio de cada una.
+        $this->assertStringContainsString('$12.500', $html);
     }
 }

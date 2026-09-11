@@ -300,11 +300,11 @@ class ReceiptPrinter
             // junto a la cantidad y el total sin quedar recortado.
             $printer->text($this->wrap($name)."\n");
 
-            // Sólo cantidad y total: el precio unitario repite la cifra en
-            // los renglones de una unidad y estorba en un rollo angosto.
+            // Cantidad y precio de cada unidad; el total de la venta va una
+            // sola vez, al pie.
             $printer->text($this->columnsLine(
                 '  '.$line->quantity,
-                $this->money($line->subtotal)
+                $this->money($line->unit_price)
             ));
         }
     }

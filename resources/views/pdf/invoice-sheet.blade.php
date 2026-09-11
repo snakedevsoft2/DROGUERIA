@@ -121,7 +121,7 @@
         .c-item  { width: 7%;  text-align: left; padding-left: 0 !important; }
         .c-name  { width: 53%; word-break: break-word; overflow-wrap: anywhere; }
         .c-qty   { width: 14%; text-align: right; white-space: nowrap; }
-        .c-total { width: 26%; text-align: right; white-space: nowrap; padding-right: 0 !important; }
+        .c-price { width: 26%; text-align: right; white-space: nowrap; padding-right: 0 !important; }
 
         .presentation {
             display: block;
@@ -292,7 +292,7 @@
                         <th class="c-item">N.º</th>
                         <th class="c-name">Descripción</th>
                         <th class="c-qty">Cant.</th>
-                        <th class="c-total">Valor</th>
+                        <th class="c-price">V. unitario</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -306,7 +306,7 @@
                                 @endif
                             </td>
                             <td class="c-qty">{{ $line->quantity }}</td>
-                            <td class="c-total">{{ $money($line->subtotal) }}</td>
+                            <td class="c-price">{{ $money($line->unit_price) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
