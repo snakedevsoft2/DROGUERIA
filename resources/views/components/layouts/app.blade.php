@@ -11,7 +11,7 @@
 </head>
 <body class="h-full bg-slate-100 font-sans antialiased text-slate-800">
 
-    <nav class="bg-white border-b border-slate-200 sticky top-0 z-40">
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-40 print:hidden">
         <div class="max-w-7xl mx-auto px-6">
             <div class="flex h-16 items-center justify-between">
 
@@ -45,6 +45,7 @@
                         $links = [
                             ['route' => 'pos',       'label' => 'Punto de Venta'],
                             ['route' => 'inventory', 'label' => 'Inventario'],
+                            ['route' => 'prices',    'label' => 'Lista de precios'],
                             ['route' => 'reports',   'label' => 'Reportes'],
                         ];
                     @endphp

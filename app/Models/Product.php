@@ -42,6 +42,17 @@ class Product extends Model
         return round((float) $this->cost_price / $unidades, 2);
     }
 
+    /**
+     * Lo que vale la caja completa al público.
+     *
+     * El precio de venta se guarda por unidad, así que la caja sale de
+     * multiplicarlo por las unidades que trae la presentación.
+     */
+    public function getPackagePriceAttribute(): float
+    {
+        return round((float) $this->selling_price * max(1, (int) $this->units_per_package), 2);
+    }
+
     public function batches()
     {
         return $this->hasMany(Batch::class);
