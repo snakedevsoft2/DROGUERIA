@@ -1,6 +1,9 @@
 # Composer las reinstala durante el build en Vercel.
 /vendor
 /node_modules
+/dist
+/build-cache
+/Drogueria-Instalador.zip
 
 # Los assets compilados sí se suben (public/build); el resto no hace falta.
 /tests

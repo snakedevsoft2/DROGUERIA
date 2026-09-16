@@ -22,6 +22,12 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 
+# Salida del instalador portable (build-instalador.ps1): son binarios pesados
+# y una copia completa de la app, no algo que deba versionarse.
+/dist
+/build-cache
+/Drogueria-Instalador.zip
+
 # Los assets compilados por Vite se versionan a proposito: Vercel los sirve
 # como estaticos y la funcion PHP necesita public/build/manifest.json.
 # Regenerar con: npm run build
