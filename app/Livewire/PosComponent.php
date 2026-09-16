@@ -66,7 +66,10 @@ class PosComponent extends Component
             ->where(function ($query) use ($term, $like) {
                 $query->where('name', $like, "%{$term}%")
                     ->orWhere('barcode', $like, "%{$term}%")
-                    ->orWhere('presentation', $like, "%{$term}%");
+                    ->orWhere('presentation', $like, "%{$term}%")
+                    // Hay lotes con código propio: el del empaque con que llegó
+                    // ese pedido. Buscar por él tiene que dar el mismo producto.
+                    ->orWhereHas('batches', fn ($b) => $b->where('barcode', $like, "%{$term}%"));
             })
             ->withSum(['batches as total_stock' => fn ($q) => $this->availableBatches($q)], 'stock')
             ->orderBy('name')
@@ -86,7 +89,10 @@ class PosComponent extends Component
     }
 
     /**
-     * Barcode scanners emit the code then press Enter — exact match wins.
+     * Barcode scanners emit the code then press Enter — exact match wins,
+     * unless el código quedó repetido en más de un producto: ahí se deja el
+     * término en el buscador para que el cajero elija de la lista en vez de
+     * adivinar cuál es.
      */
     public function searchByBarcode(): void
     {
@@ -96,11 +102,21 @@ class PosComponent extends Component
             return;
         }
 
-        $product = Product::where('barcode', $term)->where('is_active', true)->first();
+        // El código puede ser el de la ficha o el de uno de sus lotes: los dos
+        // están pegados en el mismo empaque y los dos tienen que servir.
+        $products = Product::query()
+            ->where('is_active', true)
+            ->where(fn ($q) => $q->where('barcode', $term)
+                ->orWhereHas('batches', fn ($b) => $b->where('barcode', $term)))
+            ->get();
 
-        if ($product) {
-            $this->addToCart($product->id);
+        if ($products->count() === 1) {
+            $this->addToCart($products->first()->id);
 
+            return;
+        }
+
+        if ($products->count() > 1) {
             return;
         }
 

@@ -47,7 +47,8 @@ class PriceListComponent extends Component
                 $query->where(function ($q) use ($term) {
                     $q->where('name', 'like', "%{$term}%")
                         ->orWhere('barcode', 'like', "%{$term}%")
-                        ->orWhere('presentation', 'like', "%{$term}%");
+                        ->orWhere('presentation', 'like', "%{$term}%")
+                        ->orWhereHas('batches', fn ($b) => $b->where('barcode', 'like', "%{$term}%"));
                 });
             })
             ->orderBy('name')

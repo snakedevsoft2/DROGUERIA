@@ -153,6 +153,9 @@
                                                 </span>
                                                 <span class="text-slate-400">
                                                     {{ $expiration->format('d/m/Y') }} &middot; {{ $batch->stock }} u.
+                                                    @if ($batch->barcode && $batch->barcode !== $product->barcode)
+                                                        <span class="text-slate-500" title="Este lote tiene su propio código de barras">&middot; {{ $batch->barcode }}</span>
+                                                    @endif
                                                     @if ($days <= 0) <span class="text-red-600 font-semibold">vencido</span> @endif
                                                     @unless ($batch->is_active) <span class="text-slate-500 font-semibold">inactivo</span> @endunless
                                                 </span>
@@ -227,7 +230,7 @@
 
             <form
                 wire:submit="saveProduct"
-                class="relative bg-white w-full max-w-2xl rounded-2xl shadow-2xl my-8"
+                class="relative bg-white w-full max-w-4xl rounded-2xl shadow-2xl my-8"
                 x-data="{
                     /* Si ya se escribió algo, salir pide confirmación: el
                        formulario solo se cierra cuando el usuario lo decide. */
@@ -261,7 +264,35 @@
                     <button type="button" x-on:click="cerrar()" class="text-slate-400 hover:text-slate-700 text-2xl leading-none">&times;</button>
                 </div>
 
+                {{-- El código ya estaba registrado y el usuario decidió que es
+                     el mismo producto: se avisa para que no crea que está
+                     creando una ficha repetida. --}}
+                @if ($fusionadoConExistente)
+                    <div class="mx-6 mt-4 px-4 py-3 rounded-xl bg-blue-50 border border-blue-100 text-sm text-blue-900">
+                        Este código de barras ya estaba registrado, así que se está trabajando sobre
+                        <span class="font-bold">{{ $name }}</span>.
+                        Lo que agregue abajo entra como <span class="font-semibold">lote nuevo</span>, con su propia fecha de vencimiento.
+                    </div>
+                @endif
+
+                {{-- El código coincide con otro producto pero todavía no se
+                     decidió qué hacer: se avisa y se deja elegir, en vez de
+                     fusionar solo. Si no se toca nada, al guardar queda como
+                     producto aparte (numerado si el nombre también se repite). --}}
+                @if ($duplicadoProductId && ! $fusionadoConExistente)
+                    <div class="mx-6 mt-4 px-4 py-3 rounded-xl bg-amber-50 border border-amber-100 text-sm text-amber-900 flex items-center justify-between gap-3">
+                        <span>
+                            Ya existe <span class="font-bold">{{ $duplicadoNombre }}</span> con este código.
+                            Si guarda así, queda como <span class="font-semibold">producto aparte</span> (se numera si el nombre también se repite).
+                        </span>
+                        <button type="button" wire:click="usarProductoExistente" class="shrink-0 px-3 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-semibold hover:bg-amber-700">
+                            Es el mismo: agregar lote
+                        </button>
+                    </div>
+                @endif
+
                 <div
+                    wire:key="precios-{{ $productId ?? 'nuevo' }}"
                     class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4"
                     x-data="{
                         unidades: @js(max(1, (int) $units_per_package)),
@@ -286,7 +317,12 @@
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Código de barras *</label>
-                        <input type="text" wire:model="barcode" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-sm">
+                        {{-- .blur y no en vivo: el lector de código de barras
+                             dispara una sola consulta al salir del campo, no una
+                             por cada dígito. Si el código ya existe, se avisa
+                             arriba y el usuario decide si fusiona o guarda
+                             aparte. --}}
+                        <input type="text" wire:model.blur="barcode" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-sm">
                         @error('barcode') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>
 
@@ -360,6 +396,18 @@
                         <textarea wire:model="description" rows="3" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-sm"></textarea>
                         @error('description') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>
+
+                    {{-- Lotes: el stock del producto es la suma de estos. Se
+                         cargan todos los que llegaron en el pedido, cada uno con
+                         su vencimiento y, si el empaque trae otro, su código. --}}
+                    <div class="md:col-span-2 pt-4 border-t border-slate-100">
+                        <div class="flex items-baseline justify-between mb-2">
+                            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Lotes</h4>
+                            <span class="text-[11px] text-slate-400">El stock sale de la suma de los lotes</span>
+                        </div>
+
+                        @include('livewire.partials.batch-rows')
+                    </div>
                 </div>
 
                 <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex gap-3 justify-end rounded-b-2xl">
@@ -375,13 +423,13 @@
 
     {{-- Modal lote --}}
     @if ($showBatchModal)
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
             {{-- Igual que el de producto: el fondo no cierra nada. --}}
             <div class="absolute inset-0 bg-slate-900/50"></div>
 
             <form
                 wire:submit="saveBatch"
-                class="relative bg-white w-full max-w-md rounded-2xl shadow-2xl"
+                class="relative bg-white w-full max-w-3xl rounded-2xl shadow-2xl my-8"
                 x-data="{
                     tocado: false,
                     cerrar() {
@@ -405,39 +453,37 @@
                 x-on:keydown.enter="if (['INPUT', 'SELECT'].includes($event.target.tagName)) { $event.preventDefault(); siguienteCampo($event.target) }"
                 x-on:input="tocado = true"
             >
+                @php $productoDelLote = $batchProductId ? \App\Models\Product::find($batchProductId) : null; @endphp
+
                 <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-                    <h3 class="font-bold text-slate-800">{{ $batchId ? 'Editar lote' : 'Nuevo lote' }}</h3>
+                    <div>
+                        <h3 class="font-bold text-slate-800">{{ $batchId ? 'Editar lote' : 'Agregar lotes' }}</h3>
+                        @if ($productoDelLote)
+                            <p class="text-xs text-slate-400">
+                                {{ $productoDelLote->name }} &middot; código del producto {{ $productoDelLote->barcode }}
+                            </p>
+                        @endif
+                    </div>
                     <button type="button" x-on:click="cerrar()" class="text-slate-400 hover:text-slate-700 text-2xl leading-none">&times;</button>
                 </div>
 
-                <div class="p-6 space-y-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Número de lote *</label>
-                        <input type="text" wire:model="batch_number" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-sm">
-                        @error('batch_number') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                    </div>
+                <div class="p-6">
+                    <p class="text-xs text-slate-500 mb-3">
+                        Cargue de una vez todos los lotes que llegaron. Cada uno lleva su vencimiento;
+                        el código de barras sólo se llena si el empaque trae uno distinto al del producto.
+                    </p>
 
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Fecha de vencimiento *</label>
-                        <input type="date" wire:model="expiration_date" min="{{ now()->addDay()->toDateString() }}" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-sm">
-                        @error('expiration_date') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                    </div>
+                    @include('livewire.partials.batch-rows')
 
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Unidades en el lote *</label>
-                        <input type="number" min="0" wire:model="stock" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-sm">
-                        @error('stock') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                    </div>
-
-                    <label class="flex items-center gap-2 text-sm text-slate-600">
-                        <input type="checkbox" wire:model="batch_is_active" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
-                        Lote habilitado para la venta
-                    </label>
+                    @error('batchProductId') <p class="text-xs text-red-600 mt-2">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex gap-3 justify-end rounded-b-2xl">
                     <button type="button" x-on:click="cerrar()" class="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-semibold hover:bg-white transition">Cancelar</button>
-                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition">Guardar lote</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition">
+                        <span wire:loading.remove wire:target="saveBatch">Guardar lotes</span>
+                        <span wire:loading wire:target="saveBatch">Guardando...</span>
+                    </button>
                 </div>
             </form>
         </div>

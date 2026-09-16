@@ -1,0 +1,87 @@
+===========================================================================
+  PUNTO DE VENTA - DROGUERÍA
+  Memoria de instalación
+===========================================================================
+
+
+  CÓMO INSTALAR
+  -------------
+
+  1. Conecte esta memoria USB al computador de la droguería.
+
+  2. Abra la memoria y haga doble clic en:
+
+         INSTALAR.bat
+
+  3. Windows va a pedir permiso ("¿Desea permitir que esta aplicación
+     haga cambios en el dispositivo?"). Responda SÍ.
+
+     Si Windows muestra una pantalla azul que dice "Windows protegió su
+     PC", haga clic en "Más información" y luego en "Ejecutar de todas
+     formas". Eso sale porque el instalador no está firmado, no porque
+     tenga algo malo.
+
+  4. Siga el asistente. Le va a preguntar:
+
+       - Dónde instalar ............ deje C:\Drogueria
+       - Nombre, ciudad, teléfono .. salen impresos en el tiquete
+       - Ancho del rollo ........... 80mm (opción 1) para la Epson TM-T20II
+       - Cuál es la impresora ...... elíjala de la lista
+
+  5. Al terminar, en el escritorio queda un icono que dice "Droguería".
+     Ese es el programa.
+
+  6. YA PUEDE RETIRAR LA MEMORIA USB. El programa quedó copiado en el
+     disco duro y no necesita la memoria para funcionar.
+
+
+  ANTES DE INSTALAR, TENGA LISTO
+  ------------------------------
+
+  - La impresora Epson TM-T20II conectada por USB y ENCENDIDA, con su
+    controlador ya instalado en Windows (el CD o la descarga de Epson).
+    Si Windows ya la ve en "Dispositivos e impresoras", está lista.
+
+  - El lector de códigos de barras conectado por USB. No necesita
+    ningún programa: Windows lo reconoce solo, como si fuera un teclado.
+
+
+  QUÉ INSTALA
+  -----------
+
+  Todo queda dentro de una sola carpeta (C:\Drogueria):
+
+    app\ ........... el programa
+    php\ ........... el motor que lo hace funcionar
+    respaldos\ ..... las copias de seguridad
+
+  NO instala nada más en el computador: ni XAMPP, ni MySQL, ni servicios
+  de Windows. No toca ningún otro programa que ya tenga el equipo.
+
+  Para desinstalarlo basta con borrar la carpeta C:\Drogueria y el icono
+  del escritorio.
+
+
+  EL PROGRAMA NO PIDE USUARIO NI CONTRASEÑA
+  -----------------------------------------
+
+  Se abre y queda listo para vender. Es a propósito: es una sola caja y
+  una sola persona atendiendo.
+
+  Como no hay contraseña, cualquiera que se siente en ese computador
+  puede ver las ventas y cambiar el inventario. Si el equipo queda
+  expuesto al público, conviene ponerle contraseña a Windows.
+
+
+  SI ALGO SALE MAL
+  ----------------
+
+  En la carpeta C:\Drogueria hay una herramienta llamada
+
+      Iniciar (modo diagnostico).bat
+
+  Ábrala: levanta el programa mostrando los mensajes de error en
+  pantalla. Eso es lo que hay que fotografiar y enviar para saber
+  qué pasó.
+
+===========================================================================
