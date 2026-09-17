@@ -9,7 +9,12 @@
     },
     "routes": [
         {
-            "handle": "filesystem"
+            "src": "/(build|images)/(.*)",
+            "dest": "/$1/$2"
+        },
+        {
+            "src": "/(favicon\\.ico|robots\\.txt)",
+            "dest": "/$1"
         },
         {
             "src": "/(.*)",
