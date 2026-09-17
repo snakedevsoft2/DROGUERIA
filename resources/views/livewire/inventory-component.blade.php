@@ -317,12 +317,14 @@
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Código de barras *</label>
-                        {{-- .blur y no en vivo: el lector de código de barras
-                             dispara una sola consulta al salir del campo, no una
-                             por cada dígito. Si el código ya existe, se avisa
-                             arriba y el usuario decide si fusiona o guarda
-                             aparte. --}}
-                        <input type="text" wire:model.blur="barcode" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-sm">
+                        {{-- .live.debounce y no .blur: en la versión instalada de
+                             Livewire, wire:model.blur no dispara la actualización
+                             al salir del campo (probado en navegador real). El
+                             debounce logra lo mismo que buscaba el .blur —una
+                             sola consulta, no una por dígito— sin depender de ese
+                             evento. Si el código ya existe, se avisa arriba y el
+                             usuario decide si fusiona o guarda aparte. --}}
+                        <input type="text" wire:model.live.debounce.500ms="barcode" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-sm">
                         @error('barcode') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>
 
