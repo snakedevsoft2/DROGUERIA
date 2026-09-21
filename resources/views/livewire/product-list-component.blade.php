@@ -19,12 +19,22 @@
             </button>
         </div>
 
-        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 print:shadow-none flex items-center justify-between gap-4">
-            <div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 print:grid-cols-3 gap-4">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 print:shadow-none">
                 <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Costo total del inventario</p>
-                <p class="text-xs text-slate-400">Unidades en stock &times; costo por unidad{{ trim($search) !== '' ? ' (solo productos filtrados)' : '' }}</p>
+                <p class="text-2xl font-extrabold text-slate-900">${{ number_format($this->inventoryCost, 0, ',', '.') }}</p>
+                <p class="text-xs text-slate-400">Unidades en stock &times; costo por unidad</p>
             </div>
-            <p class="text-2xl font-extrabold text-slate-900">${{ number_format($this->inventoryCost, 0, ',', '.') }}</p>
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 print:shadow-none">
+                <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Total de venta del inventario</p>
+                <p class="text-2xl font-extrabold text-slate-900">${{ number_format($this->inventorySaleValue, 0, ',', '.') }}</p>
+                <p class="text-xs text-slate-400">Unidades en stock &times; precio de venta</p>
+            </div>
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 print:shadow-none">
+                <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Ganancia estimada</p>
+                <p class="text-2xl font-extrabold text-emerald-600">${{ number_format($this->inventorySaleValue - $this->inventoryCost, 0, ',', '.') }}</p>
+                <p class="text-xs text-slate-400">Venta menos costo{{ trim($search) !== '' ? ' (solo productos filtrados)' : '' }}</p>
+            </div>
         </div>
 
         <div class="print:hidden bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap gap-3 items-center">

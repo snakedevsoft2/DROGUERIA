@@ -59,4 +59,13 @@ class ProductListComponent extends Component
             fn ($p) => (int) $p->total_stock * $p->unit_cost
         );
     }
+
+    /** Lo que se recaudaría vendiendo todo el stock de los productos listados (unidades x precio de venta). */
+    #[Computed(persist: false)]
+    public function inventorySaleValue(): float
+    {
+        return (float) $this->products->sum(
+            fn ($p) => (int) $p->total_stock * $p->selling_price
+        );
+    }
 }
