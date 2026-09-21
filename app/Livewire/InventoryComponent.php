@@ -6,6 +6,7 @@ use App\Models\Batch;
 use App\Models\Product;
 use App\Models\SaleDetail;
 use App\Support\AdminPassword;
+use App\Support\Like;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -189,14 +190,15 @@ class InventoryComponent extends Component
             ->with(['batches' => fn ($q) => $q->orderBy('expiration_date')])
             ->when($this->search !== '', function ($query) {
                 $term = trim($this->search);
-                $query->where(function ($q) use ($term) {
-                    $q->where('name', 'like', "%{$term}%")
-                        ->orWhere('barcode', 'like', "%{$term}%")
-                        ->orWhere('presentation', 'like', "%{$term}%")
+                $like = Like::operator();
+                $query->where(function ($q) use ($term, $like) {
+                    $q->where('name', $like, "%{$term}%")
+                        ->orWhere('barcode', $like, "%{$term}%")
+                        ->orWhere('presentation', $like, "%{$term}%")
                         // Un lote puede traer su propio código: buscarlo tiene
                         // que llevar al producto igual que el código de la ficha.
-                        ->orWhereHas('batches', fn ($b) => $b->where('barcode', 'like', "%{$term}%"))
-                        ->orWhereHas('batches', fn ($b) => $b->where('batch_number', 'like', "%{$term}%"));
+                        ->orWhereHas('batches', fn ($b) => $b->where('barcode', $like, "%{$term}%"))
+                        ->orWhereHas('batches', fn ($b) => $b->where('batch_number', $like, "%{$term}%"));
                 });
             })
             ->when($this->filter === 'low', fn ($q) => $this->whereLowStock($q))

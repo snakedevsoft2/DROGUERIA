@@ -120,7 +120,19 @@
                                         </p>
                                     @endif
                                 </td>
-                                <td class="p-4 text-right font-semibold text-slate-800">${{ number_format($product->selling_price, 0, ',', '.') }}</td>
+                                <td class="p-4 text-right font-semibold text-slate-800">
+                                    ${{ number_format($product->selling_price, 0, ',', '.') }}
+                                    @if ($product->units_per_package > 1)
+                                        <p class="text-[11px] font-normal text-slate-400">
+                                            caja ${{ number_format($product->package_price, 0, ',', '.') }}
+                                        </p>
+                                    @endif
+                                    @if ($product->unit_cost > 0)
+                                        <p class="text-[11px] font-normal text-emerald-600">
+                                            ganancia ${{ number_format($product->selling_price - $product->unit_cost, 0, ',', '.') }} /u
+                                        </p>
+                                    @endif
+                                </td>
                                 <td class="p-4 text-center">
                                     <span @class([
                                         'inline-block px-2.5 py-1 rounded-full text-xs font-bold',

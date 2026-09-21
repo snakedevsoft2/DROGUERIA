@@ -45,6 +45,7 @@
                         $links = [
                             ['route' => 'pos',       'label' => 'Punto de Venta'],
                             ['route' => 'inventory', 'label' => 'Inventario'],
+                            ['route' => 'product-list', 'label' => 'Listado'],
                             ['route' => 'prices',    'label' => 'Lista de precios'],
                             ['route' => 'reports',   'label' => 'Reportes'],
                         ];
