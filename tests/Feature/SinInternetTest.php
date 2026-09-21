@@ -90,7 +90,7 @@ class SinInternetTest extends TestCase
         $paginas = [
             'Punto de venta' => route('pos'),
             'Inventario' => route('inventory'),
-            'Lista de precios' => route('prices'),
+            'Listado' => route('product-list'),
             'Reportes' => route('reports'),
             'Comprobante' => route('receipt', $sale),
         ];
