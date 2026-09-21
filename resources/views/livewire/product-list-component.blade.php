@@ -19,6 +19,14 @@
             </button>
         </div>
 
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 print:shadow-none flex items-center justify-between gap-4">
+            <div>
+                <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Costo total del inventario</p>
+                <p class="text-xs text-slate-400">Unidades en stock &times; costo por unidad{{ trim($search) !== '' ? ' (solo productos filtrados)' : '' }}</p>
+            </div>
+            <p class="text-2xl font-extrabold text-slate-900">${{ number_format($this->inventoryCost, 0, ',', '.') }}</p>
+        </div>
+
         <div class="print:hidden bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap gap-3 items-center">
             <div class="relative flex-1 min-w-64">
                 <input
@@ -46,6 +54,7 @@
                     <thead>
                         <tr class="bg-slate-100 text-slate-500 text-xs uppercase tracking-wider">
                             <th class="p-4 print:p-2">Producto</th>
+                            <th class="p-4 print:p-2 text-right">Stock</th>
                             <th class="p-4 print:p-2 text-right">Costo por unidad</th>
                             <th class="p-4 print:p-2 text-right">Precio de venta por unidad</th>
                             <th class="p-4 print:p-2 text-right">Ganancia por unidad</th>
@@ -69,6 +78,9 @@
                                     </p>
                                 </td>
                                 <td class="p-4 print:p-2 text-right text-slate-600">
+                                    {{ number_format((int) $product->total_stock, 0, ',', '.') }}
+                                </td>
+                                <td class="p-4 print:p-2 text-right text-slate-600">
                                     ${{ number_format($product->unit_cost, 0, ',', '.') }}
                                 </td>
                                 <td class="p-4 print:p-2 text-right font-semibold text-slate-800">
@@ -80,7 +92,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="p-10 text-center text-slate-400">
+                                <td colspan="5"class="p-10 text-center text-slate-400">
                                     No se encontraron productos.
                                 </td>
                             </tr>

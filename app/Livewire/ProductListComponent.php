@@ -46,7 +46,17 @@ class ProductListComponent extends Component
                         ->orWhere('presentation', $like, "%{$term}%");
                 });
             })
+            ->withSum('batches as total_stock', 'stock')
             ->orderBy('name')
             ->get();
+    }
+
+    /** Lo que cuesta todo el stock de los productos listados (unidades x costo unitario). */
+    #[Computed(persist: false)]
+    public function inventoryCost(): float
+    {
+        return (float) $this->products->sum(
+            fn ($p) => (int) $p->total_stock * $p->unit_cost
+        );
     }
 }
