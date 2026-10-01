@@ -24,6 +24,29 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Programa de escritorio
+    |--------------------------------------------------------------------------
+    |
+    | El sitio web ofrece descargar el programa para instalarlo en el equipo
+    | de la droguería, donde corre sin internet. Dentro del programa ya
+    | instalado (DROGUERIA_ESCRITORIO=true, lo pone el instalador) el botón
+    | no se muestra: no tiene sentido descargarse a sí mismo.
+    |
+    */
+
+    // Las instalaciones anteriores no traen la variable en su .env, pero
+    // corren en 127.0.0.1: con eso basta para saber que es el programa.
+    'escritorio' => (bool) env(
+        'DROGUERIA_ESCRITORIO',
+        in_array(parse_url((string) env('APP_URL', ''), PHP_URL_HOST), ['127.0.0.1', 'localhost'], true)
+    ),
+    'descarga_url' => env(
+        'DESCARGA_ESCRITORIO_URL',
+        'https://github.com/snakedevsoft2/DROGUERIA/releases/latest/download/Drogueria-Instalador.zip'
+    ),
+
+    /*
+    |--------------------------------------------------------------------------
     | Logo
     |--------------------------------------------------------------------------
     |

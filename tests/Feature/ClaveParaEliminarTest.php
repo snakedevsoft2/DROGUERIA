@@ -14,8 +14,8 @@ use Livewire\Livewire;
 use Tests\TestCase;
 
 /**
- * Consultar y vender no piden nada; borrar inventario sí, porque es lo único
- * que no tiene vuelta atrás.
+ * Consultar, vender y registrar mercancía nueva no piden nada; modificar o
+ * borrar el inventario sí pide la clave del administrador.
  */
 class ClaveParaEliminarTest extends TestCase
 {
@@ -123,19 +123,127 @@ class ClaveParaEliminarTest extends TestCase
         $this->get(route('reports'))->assertOk();
     }
 
-    public function test_desactivar_no_pide_clave(): void
+    public function test_desactivar_pide_clave(): void
     {
         $product = $this->producto();
         $batch = $this->lote($product);
 
-        // Desactivar se deshace; por eso no exige clave.
+        // Sin clave no cambia nada.
         Livewire::test(InventoryComponent::class)
             ->call('toggleProduct', $product->id)
+            ->set('clavePassword', 'equivocada')
+            ->call('confirmarClave')
+            ->assertHasErrors('clavePassword');
+
+        $this->assertTrue((bool) $product->fresh()->is_active);
+
+        Livewire::test(InventoryComponent::class)
+            ->call('toggleProduct', $product->id)
+            ->set('clavePassword', AdminPassword::INICIAL)
+            ->call('confirmarClave')
             ->call('toggleBatch', $batch->id)
+            ->set('clavePassword', AdminPassword::INICIAL)
+            ->call('confirmarClave')
             ->assertHasNoErrors();
 
         $this->assertFalse((bool) $product->fresh()->is_active);
         $this->assertFalse((bool) $batch->fresh()->is_active);
+    }
+
+    public function test_editar_un_producto_pide_clave(): void
+    {
+        $product = $this->producto();
+
+        Livewire::test(InventoryComponent::class)
+            ->call('editProduct', $product->id)
+            ->assertSet('showProductModal', false)
+            ->set('clavePassword', 'equivocada')
+            ->call('confirmarClave')
+            ->assertHasErrors('clavePassword')
+            ->assertSet('showProductModal', false)
+            ->set('clavePassword', AdminPassword::INICIAL)
+            ->call('confirmarClave')
+            ->assertSet('showProductModal', true)
+            ->set('selling_price', 900)
+            ->call('saveProduct')
+            ->assertHasNoErrors();
+
+        $this->assertEquals(900, $product->fresh()->selling_price);
+    }
+
+    public function test_no_se_guarda_una_ficha_existente_sin_clave(): void
+    {
+        $product = $this->producto();
+
+        // Aunque alguien ponga el id a mano, sin la clave no se guarda.
+        Livewire::test(InventoryComponent::class)
+            ->set('productId', $product->id)
+            ->set('barcode', $product->barcode)
+            ->set('name', 'Otro nombre')
+            ->set('presentation', 'Caja x 10')
+            ->set('units_per_package', 10)
+            ->set('cost_price', 4000)
+            ->set('selling_price', 450)
+            ->call('saveProduct')
+            ->assertHasErrors('batchDeletePassword');
+
+        $this->assertSame('Naproxeno 250 mg', $product->fresh()->name);
+    }
+
+    public function test_editar_un_lote_pide_clave(): void
+    {
+        $product = $this->producto();
+        $batch = $this->lote($product);
+
+        $componente = Livewire::test(InventoryComponent::class)
+            ->call('editBatch', $batch->id)
+            ->assertSet('showBatchModal', false)
+            ->set('clavePassword', AdminPassword::INICIAL)
+            ->call('confirmarClave')
+            ->assertSet('showBatchModal', true);
+
+        $filas = $componente->get('batchRows');
+        $filas[0]['stock'] = 3;
+        $componente->set('batchRows', $filas)->call('saveBatch')->assertHasNoErrors();
+
+        $this->assertSame(3, (int) $batch->fresh()->stock);
+    }
+
+    public function test_cambiar_un_lote_guardado_sin_clave_no_se_permite(): void
+    {
+        $product = $this->producto();
+        $batch = $this->lote($product);
+
+        // Se cuela un lote guardado en el formulario de "agregar lote".
+        $componente = Livewire::test(InventoryComponent::class)->call('createBatch', $product->id);
+        $filas = $componente->get('batchRows');
+        $filas[0] = array_merge($filas[0], [
+            'id' => $batch->id,
+            'batch_number' => $batch->batch_number,
+            'expiration_date' => now()->addYear()->toDateString(),
+            'stock' => 999,
+        ]);
+
+        $componente->set('batchRows', $filas)->call('saveBatch')->assertHasErrors('batchDeletePassword');
+
+        $this->assertNotSame(999, (int) $batch->fresh()->stock);
+    }
+
+    public function test_agregar_lotes_nuevos_no_pide_clave(): void
+    {
+        $product = $this->producto();
+
+        $componente = Livewire::test(InventoryComponent::class)->call('createBatch', $product->id);
+        $filas = $componente->get('batchRows');
+        $filas[0] = array_merge($filas[0], [
+            'batch_number' => 'L-NUEVO',
+            'expiration_date' => now()->addYear()->toDateString(),
+            'stock' => 12,
+        ]);
+
+        $componente->set('batchRows', $filas)->call('saveBatch')->assertHasNoErrors();
+
+        $this->assertSame(12, (int) $product->batches()->where('batch_number', 'L-NUEVO')->value('stock'));
     }
 
     public function test_la_clave_se_cambia_desde_reportes(): void

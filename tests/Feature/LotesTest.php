@@ -198,18 +198,21 @@ class LotesTest extends TestCase
             'is_active' => true,
         ]);
 
-        // Sin clave no se borra nada.
+        // Sin clave ni siquiera se abre la ficha.
         $componente = Livewire::test(InventoryComponent::class)
             ->call('editProduct', $product->id)
-            ->call('removeBatchRow', 0)
-            ->call('saveProduct')
-            ->assertHasErrors('batchDeletePassword');
+            ->set('clavePassword', 'equivocada')
+            ->call('confirmarClave')
+            ->assertHasErrors('clavePassword')
+            ->assertSet('showProductModal', false);
 
         $this->assertNotNull(Batch::find($lote->id));
 
-        // Con la clave correcta sí.
+        // Con la clave correcta se abre y se puede quitar el lote.
         $componente
-            ->set('batchDeletePassword', AdminPassword::INICIAL)
+            ->set('clavePassword', AdminPassword::INICIAL)
+            ->call('confirmarClave')
+            ->call('removeBatchRow', 0)
             ->call('saveProduct')
             ->assertHasNoErrors();
 
@@ -229,6 +232,7 @@ class LotesTest extends TestCase
 
         Livewire::test(InventoryComponent::class)
             ->call('editProduct', $product->id)
+            ->set('clavePassword', AdminPassword::INICIAL)->call('confirmarClave')
             ->call('removeBatchRow', 0)
             ->call('restoreRemovedBatch', $lote->id)
             ->call('saveProduct')
@@ -249,7 +253,9 @@ class LotesTest extends TestCase
             'is_active' => true,
         ]);
 
-        $componente = Livewire::test(InventoryComponent::class)->call('editProduct', $product->id);
+        $componente = Livewire::test(InventoryComponent::class)
+            ->call('editProduct', $product->id)
+            ->set('clavePassword', AdminPassword::INICIAL)->call('confirmarClave');
 
         $filas = $componente->get('batchRows');
         $filas[0]['stock'] = 55;
@@ -299,6 +305,7 @@ class LotesTest extends TestCase
             ->call('createProduct')
             ->set('barcode', $product->barcode)
             ->call('usarProductoExistente')
+            ->set('batchDeletePassword', AdminPassword::INICIAL)
             ->assertSet('productId', $product->id)
             ->assertSet('fusionadoConExistente', true)
             ->set('batchRows', [$this->fila(['batch_number' => 'L-NUEVO', 'stock' => 9])])
@@ -397,6 +404,7 @@ class LotesTest extends TestCase
             ->set('selling_price', 700)
             ->set('barcode', $product->barcode)
             ->call('usarProductoExistente')
+            ->set('batchDeletePassword', AdminPassword::INICIAL)
             ->set('batchRows', [$this->fila(['batch_number' => 'L-9', 'stock' => 4])])
             ->call('saveProduct')
             ->assertHasNoErrors();

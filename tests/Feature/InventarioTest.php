@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Livewire\InventoryComponent;
 use App\Models\Batch;
 use App\Models\Product;
+use App\Support\AdminPassword;
 use App\Models\Sale;
 use App\Models\SaleDetail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -119,10 +120,10 @@ class InventarioTest extends TestCase
         $product = $this->producto();
         $batch = $this->lote($product);
 
-        Livewire::test(InventoryComponent::class)->call('toggleBatch', $batch->id);
+        Livewire::test(InventoryComponent::class)->call('toggleBatch', $batch->id)->set('clavePassword', AdminPassword::INICIAL)->call('confirmarClave');
         $this->assertFalse((bool) $batch->fresh()->is_active);
 
-        Livewire::test(InventoryComponent::class)->call('toggleBatch', $batch->id);
+        Livewire::test(InventoryComponent::class)->call('toggleBatch', $batch->id)->set('clavePassword', AdminPassword::INICIAL)->call('confirmarClave');
         $this->assertTrue((bool) $batch->fresh()->is_active);
     }
 
@@ -130,10 +131,10 @@ class InventarioTest extends TestCase
     {
         $product = $this->producto();
 
-        Livewire::test(InventoryComponent::class)->call('toggleProduct', $product->id);
+        Livewire::test(InventoryComponent::class)->call('toggleProduct', $product->id)->set('clavePassword', AdminPassword::INICIAL)->call('confirmarClave');
         $this->assertFalse((bool) $product->fresh()->is_active);
 
-        Livewire::test(InventoryComponent::class)->call('toggleProduct', $product->id);
+        Livewire::test(InventoryComponent::class)->call('toggleProduct', $product->id)->set('clavePassword', AdminPassword::INICIAL)->call('confirmarClave');
         $this->assertTrue((bool) $product->fresh()->is_active);
     }
 

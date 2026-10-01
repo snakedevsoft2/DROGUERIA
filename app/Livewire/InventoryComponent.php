@@ -10,6 +10,7 @@ use App\Support\Like;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -84,8 +85,30 @@ class InventoryComponent extends Component
     /** Lotes ya guardados que el usuario quitó del formulario. */
     public array $removedBatchIds = [];
 
-    /** Clave del dueño: sólo se pide si hay lotes marcados para quitar. */
+    /**
+     * Clave del dueño dentro del formulario. Sólo hace falta cuando se va a
+     * tocar una ficha que ya existía sin haber pasado por "Editar" (el caso de
+     * "Es el mismo", que pasa el formulario nuevo a un producto guardado).
+     */
     public string $batchDeletePassword = '';
+
+    // --- Clave para modificar ---
+
+    /**
+     * Qué se autorizó a modificar con la clave: "product:5" o "batch:7".
+     * Bloqueada para que el navegador no pueda ponérsela sola.
+     */
+    #[Locked]
+    public ?string $edicionAutorizada = null;
+
+    /** Acción que espera la clave: editProduct, editBatch, toggleProduct o toggleBatch. */
+    #[Locked]
+    public ?string $claveAccion = null;
+
+    #[Locked]
+    public ?int $claveId = null;
+
+    public string $clavePassword = '';
 
     // --- Deletion ---
     public ?int $confirmingProductId = null;
@@ -243,7 +266,66 @@ class InventoryComponent extends Component
         $this->showProductModal = true;
     }
 
+    /** Modificar una ficha pide la clave antes de abrirla. */
     public function editProduct(int $id): void
+    {
+        $this->pedirClave('editProduct', $id);
+    }
+
+    // --- Clave para modificar ---
+
+    /**
+     * El inventario sólo lo modifica el dueño: editar, activar o desactivar
+     * productos y lotes pide su clave, igual que borrar. Registrar mercancía
+     * nueva no la pide.
+     */
+    protected function pedirClave(string $accion, int $id): void
+    {
+        $this->claveAccion = $accion;
+        $this->claveId = $id;
+        $this->clavePassword = '';
+        $this->resetValidation();
+    }
+
+    public function cancelarClave(): void
+    {
+        $this->reset(['claveAccion', 'claveId', 'clavePassword']);
+        $this->resetValidation();
+    }
+
+    public function confirmarClave(): void
+    {
+        if (! $this->claveAccion || ! $this->claveId) {
+            return;
+        }
+
+        if (! AdminPassword::check($this->clavePassword)) {
+            $this->addError('clavePassword', 'Clave incorrecta.');
+            $this->clavePassword = '';
+
+            return;
+        }
+
+        $accion = $this->claveAccion;
+        $id = $this->claveId;
+        $this->cancelarClave();
+
+        match ($accion) {
+            'editProduct' => $this->abrirProducto($id),
+            'editBatch' => $this->abrirLote($id),
+            'toggleProduct' => $this->alternarProducto($id),
+            'toggleBatch' => $this->alternarLote($id),
+            default => null,
+        };
+    }
+
+    /** ¿Se dio la clave para esta ficha o este lote? */
+    protected function autorizado(string $tipo, ?int $id): bool
+    {
+        return $id !== null && $this->edicionAutorizada === "{$tipo}:{$id}";
+    }
+
+    protected function abrirProducto(int $id): void
     {
         $product = Product::with(['batches' => fn ($q) => $q->orderBy('expiration_date')])->findOrFail($id);
 
@@ -267,6 +349,7 @@ class InventoryComponent extends Component
         $this->resetBatchForm();
         $this->batchProductId = $product->id;
         $this->batchRows = $product->batches->map(fn ($b) => $this->batchRow($b))->all();
+        $this->edicionAutorizada = "product:{$product->id}";
 
         $this->resetValidation();
         $this->showProductModal = true;
@@ -478,7 +561,9 @@ class InventoryComponent extends Component
             return;
         }
 
-        if (! $this->authorizeBatchRemovals()) {
+        // Tocar una ficha guardada pide la clave: o se dio al entrar por
+        // "Editar", o se escribe aquí (caso "Es el mismo").
+        if (! $this->autorizarCambios('product', $this->productId, $this->productId)) {
             return;
         }
 
@@ -508,8 +593,13 @@ class InventoryComponent extends Component
         $this->dispatch('toast', type: 'success', message: $mensaje);
     }
 
-    /** Activa o desactiva el producto desde la propia lista. */
+    /** Activa o desactiva el producto desde la propia lista, con la clave. */
     public function toggleProduct(int $id): void
+    {
+        $this->pedirClave('toggleProduct', $id);
+    }
+
+    protected function alternarProducto(int $id): void
     {
         $product = Product::find($id);
 
@@ -639,7 +729,13 @@ class InventoryComponent extends Component
         $this->showBatchModal = true;
     }
 
+    /** Modificar un lote pide la clave antes de abrirlo. */
     public function editBatch(int $id): void
+    {
+        $this->pedirClave('editBatch', $id);
+    }
+
+    protected function abrirLote(int $id): void
     {
         $batch = Batch::findOrFail($id);
 
@@ -647,6 +743,7 @@ class InventoryComponent extends Component
         $this->batchId = $batch->id;
         $this->batchProductId = $batch->product_id;
         $this->batchRows = [$this->batchRow($batch)];
+        $this->edicionAutorizada = "batch:{$batch->id}";
         $this->showBatchModal = true;
     }
 
@@ -673,8 +770,9 @@ class InventoryComponent extends Component
         }
 
         // La clave se pide antes de escribir nada: si está mal, el formulario
-        // queda intacto y no se guardó ni se borró la mitad.
-        if (! $this->authorizeBatchRemovals()) {
+        // queda intacto y no se guardó ni se borró la mitad. Agregar lotes
+        // nuevos no la necesita; cambiar o quitar uno guardado sí.
+        if (! $this->autorizarCambios('batch', $this->batchId, $this->batchProductId)) {
             return;
         }
 
@@ -951,18 +1049,42 @@ class InventoryComponent extends Component
         }
     }
 
-    /** Quitar un lote guardado borra mercancía: pide la clave, como en la lista. */
-    protected function authorizeBatchRemovals(): bool
+    /**
+     * Cambiar o quitar algo que ya estaba guardado es modificar el inventario:
+     * sólo con la clave del dueño. Vale la que se dio al abrir la ficha o el
+     * lote con "Editar"; si no se pasó por ahí, la del formulario.
+     *
+     * Además, los lotes guardados que vienen en el formulario tienen que ser
+     * los que se abrieron: nada de colar el id de un lote de otro producto.
+     */
+    protected function autorizarCambios(string $tipo, ?int $id, ?int $productId): bool
     {
-        if (empty($this->removedBatchIds)) {
+        $guardados = array_values(array_unique(array_merge(
+            array_map('intval', array_filter(array_column($this->batchRows, 'id'))),
+            array_map('intval', $this->removedBatchIds),
+        )));
+
+        $tocaGuardado = ! empty($guardados) || ($tipo === 'product' && $id !== null);
+
+        if (! $tocaGuardado) {
             return true;
         }
 
-        if (AdminPassword::check($this->batchDeletePassword)) {
+        $ajenos = $tipo === 'batch' && $this->autorizado('batch', $id)
+            ? array_diff($guardados, [$id])
+            : array_diff($guardados, Batch::where('product_id', $productId ?? 0)->pluck('id')->all());
+
+        if (! empty($ajenos)) {
+            $this->addError('batchRows', 'Hay lotes en el formulario que no son de este producto.');
+
+            return false;
+        }
+
+        if ($this->autorizado($tipo, $id) || AdminPassword::check($this->batchDeletePassword)) {
             return true;
         }
 
-        $this->addError('batchDeletePassword', 'Clave incorrecta.');
+        $this->addError('batchDeletePassword', 'Se necesita la clave del administrador para modificar el inventario.');
         $this->batchDeletePassword = '';
 
         return false;
@@ -985,6 +1107,11 @@ class InventoryComponent extends Component
      * revisión sin perder el registro.
      */
     public function toggleBatch(int $id): void
+    {
+        $this->pedirClave('toggleBatch', $id);
+    }
+
+    protected function alternarLote(int $id): void
     {
         $batch = Batch::find($id);
 
@@ -1036,7 +1163,7 @@ class InventoryComponent extends Component
 
     protected function resetBatchForm(): void
     {
-        $this->reset(['batchId', 'batchProductId', 'batchRows', 'removedBatchIds', 'batchDeletePassword']);
+        $this->reset(['batchId', 'batchProductId', 'batchRows', 'removedBatchIds', 'batchDeletePassword', 'edicionAutorizada']);
         unset($this->removedBatches);
         $this->resetValidation();
     }

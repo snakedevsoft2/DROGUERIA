@@ -3,6 +3,7 @@
 #
 #   .\instalador\construir-paquete.ps1
 #   .\instalador\construir-paquete.ps1 -Usb D:
+#   .\instalador\construir-paquete.ps1 -Descarga (para el botón de descarga)
 #
 # Deja el paquete en una carpeta de trabajo y, si se le indica una unidad,
 # lo copia también a la memoria USB.
@@ -33,7 +34,11 @@ param(
     [string] $VersionWebView2 = '1.0.4191.47',
 
     # Rehace la carpeta de salida desde cero.
-    [switch] $Limpiar
+    [switch] $Limpiar,
+
+    # Además deja Drogueria-Instalador.zip junto a la carpeta, que es lo que
+    # baja el botón "Descargar para escritorio" del sitio.
+    [switch] $Descarga
 )
 
 $ErrorActionPreference = 'Stop'
@@ -432,6 +437,23 @@ if ($Usb) {
         /XD 'System Volume Information' '$RECYCLE.BIN' | Out-Null
     if ($LASTEXITCODE -ge 8) { throw "robocopy falló con código $LASTEXITCODE" }
     Ok 'Memoria USB lista.'
+}
+
+# --- 7. Zip para descargar desde el sitio ------------------------------------
+
+# El botón "Descargar para escritorio" del sitio baja este archivo. Se
+# descomprime y se hace doble clic en INSTALAR.bat, igual que con la USB.
+$zipDescarga = Join-Path (Split-Path -Parent $Salida) 'Drogueria-Instalador.zip'
+if ($Descarga) {
+    Titulo 'PASO 7  -  ZIP PARA DESCARGAR'
+    if (Test-Path -LiteralPath $zipDescarga) { Remove-Item -LiteralPath $zipDescarga -Force }
+    Paso "Comprimiendo $mb MB..."
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    [System.IO.Compression.ZipFile]::CreateFromDirectory(
+        $Salida, $zipDescarga, [System.IO.Compression.CompressionLevel]::Optimal, $false)
+    $mbZip = [math]::Round((Get-Item -LiteralPath $zipDescarga).Length / 1MB, 1)
+    Ok "Listo: $zipDescarga ($mbZip MB)"
+    Aviso 'Súbalo como Drogueria-Instalador.zip en una versión (Release) de GitHub.'
 }
 
 Titulo 'PAQUETE TERMINADO'

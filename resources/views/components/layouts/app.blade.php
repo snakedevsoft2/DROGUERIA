@@ -63,6 +63,21 @@
                             {{ $link['label'] }}
                         </a>
                     @endforeach
+
+                    {{-- Sólo en el sitio web: el programa instalado funciona sin internet. --}}
+                    @if (! config('drogueria.escritorio') && config('drogueria.descarga_url'))
+                        <a
+                            href="{{ config('drogueria.descarga_url') }}"
+                            download
+                            title="Instalar el punto de venta en el computador: funciona sin internet"
+                            class="ml-2 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v12m0 0l-5-5m5 5l5-5M4 20h16"/>
+                            </svg>
+                            Descargar para escritorio
+                        </a>
+                    @endif
                 </div>
 
             </div>

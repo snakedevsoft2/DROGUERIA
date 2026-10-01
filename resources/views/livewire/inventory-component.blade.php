@@ -424,6 +424,21 @@
                     </div>
                 </div>
 
+                {{-- "Es el mismo" pasa el formulario a una ficha guardada sin haber
+                     entrado por "Editar": modificarla pide la clave aquí. --}}
+                @if ($productId && ! $edicionAutorizada)
+                    <div class="px-6 py-3 bg-amber-50 border-t border-amber-100">
+                        <label class="block text-[10px] font-semibold text-amber-800 uppercase tracking-wider mb-1">Clave del administrador</label>
+                        <input
+                            type="password"
+                            wire:model="batchDeletePassword"
+                            class="w-full md:w-56 px-3 py-2 bg-white border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-sm tracking-widest"
+                        >
+                        @error('batchDeletePassword') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                        <p class="text-[11px] text-amber-700/80 mt-1">Este producto ya existe: modificarlo pide la clave.</p>
+                    </div>
+                @endif
+
                 <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex gap-3 justify-end rounded-b-2xl">
                     <button type="button" x-on:click="cerrar()" class="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-semibold hover:bg-white transition">Cancelar</button>
                     <button type="submit" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition">
@@ -544,6 +559,45 @@
                 <div class="flex gap-3 mt-4">
                     <button type="button" wire:click="cancelDelete" class="flex-1 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-semibold hover:bg-slate-50 transition">Cancelar</button>
                     <button type="submit" class="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold transition">Eliminar</button>
+                </div>
+
+                <p class="text-[11px] text-slate-400 mt-3">La clave se cambia desde Reportes.</p>
+            </form>
+        </div>
+    @endif
+
+    {{-- Clave para modificar: editar, activar o desactivar inventario es cosa
+         del dueño. --}}
+    @if ($claveAccion)
+        @php
+            $esLote = in_array($claveAccion, ['editBatch', 'toggleBatch']);
+            $registro = $esLote ? \App\Models\Batch::find($claveId) : \App\Models\Product::find($claveId);
+            $nombre = $esLote ? 'el lote '.$registro?->batch_number : $registro?->name;
+            $verbo = str_starts_with($claveAccion, 'edit') ? 'Editar' : ($registro?->is_active ? 'Desactivar' : 'Activar');
+            $queSeModifica = $verbo.' '.$nombre;
+        @endphp
+
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div class="absolute inset-0 bg-slate-900/50" wire:click="cancelarClave"></div>
+
+            <form wire:submit="confirmarClave" class="relative bg-white w-full max-w-sm rounded-2xl shadow-2xl p-6 text-center">
+                <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-blue-50 flex items-center justify-center text-2xl">&#128274;</div>
+
+                <h3 class="font-bold text-slate-800 mb-2">{{ $queSeModifica }}</h3>
+                <p class="text-sm text-slate-500 mb-5">Modificar el inventario pide la clave del administrador.</p>
+
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 text-left">Clave del administrador</label>
+                <input
+                    type="password"
+                    wire:model="clavePassword"
+                    autofocus
+                    class="w-full px-3 py-2.5 mb-1 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm text-center tracking-widest"
+                >
+                @error('clavePassword') <p class="text-xs text-red-600 mb-2 text-left">{{ $message }}</p> @enderror
+
+                <div class="flex gap-3 mt-4">
+                    <button type="button" wire:click="cancelarClave" class="flex-1 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-semibold hover:bg-slate-50 transition">Cancelar</button>
+                    <button type="submit" class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition">Continuar</button>
                 </div>
 
                 <p class="text-[11px] text-slate-400 mt-3">La clave se cambia desde Reportes.</p>

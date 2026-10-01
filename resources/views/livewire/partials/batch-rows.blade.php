@@ -101,8 +101,8 @@
 
     @error('batchRows') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
 
-    {{-- Lo que se quitó y todavía no se ha borrado: se puede deshacer, y si se
-         confirma pide la clave, porque borrar un lote es irreversible. --}}
+    {{-- Lo que se quitó y todavía no se ha borrado: se puede deshacer. La
+         clave ya se pidió al abrir la ficha con "Editar". --}}
     @if ($this->removedBatches->isNotEmpty())
         <div class="mt-3 p-3 rounded-xl bg-red-50 border border-red-100 space-y-2">
             <p class="text-xs font-semibold text-red-800 uppercase tracking-wider">Se eliminarán al guardar</p>
@@ -118,16 +118,7 @@
                 </div>
             @endforeach
 
-            <div>
-                <label class="block text-[10px] font-semibold text-red-800 uppercase tracking-wider mb-1">Clave para eliminar</label>
-                <input
-                    type="password"
-                    wire:model="batchDeletePassword"
-                    class="w-full md:w-56 px-3 py-2 bg-white border border-red-200 rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-sm tracking-widest"
-                >
-                @error('batchDeletePassword') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                <p class="text-[11px] text-red-700/70 mt-1">Las ventas ya registradas no se modifican.</p>
-            </div>
+            <p class="text-[11px] text-red-700/70">Las ventas ya registradas no se modifican.</p>
         </div>
     @endif
 </div>
