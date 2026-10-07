@@ -448,9 +448,22 @@ if ($Descarga) {
     Titulo 'PASO 7  -  ZIP PARA DESCARGAR'
     if (Test-Path -LiteralPath $zipDescarga) { Remove-Item -LiteralPath $zipDescarga -Force }
     Paso "Comprimiendo $mb MB..."
-    Add-Type -AssemblyName System.IO.Compression.FileSystem
-    [System.IO.Compression.ZipFile]::CreateFromDirectory(
-        $Salida, $zipDescarga, [System.IO.Compression.CompressionLevel]::Optimal, $false)
+    # Entrada por entrada y no con ZipFile::CreateFromDirectory: en Windows
+    # PowerShell 5.1 ese método separa las rutas con '\', fuera del formato
+    # zip, y hay descompresores que lo dejan todo en una sola carpeta con
+    # nombres como "recursos\app\artisan".
+    Add-Type -AssemblyName System.IO.Compression, System.IO.Compression.FileSystem
+    $raizZip = (Resolve-Path -LiteralPath $Salida).Path.TrimEnd('\') + '\'
+    $archivoZip = [System.IO.Compression.ZipFile]::Open($zipDescarga, 'Create')
+    try {
+        foreach ($f in Get-ChildItem -LiteralPath $Salida -Recurse -File -Force) {
+            $nombre = $f.FullName.Substring($raizZip.Length).Replace('\', '/')
+            [void][System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
+                $archivoZip, $f.FullName, $nombre, [System.IO.Compression.CompressionLevel]::Optimal)
+        }
+    } finally {
+        $archivoZip.Dispose()
+    }
     $mbZip = [math]::Round((Get-Item -LiteralPath $zipDescarga).Length / 1MB, 1)
     Ok "Listo: $zipDescarga ($mbZip MB)"
     Aviso 'Súbalo como Drogueria-Instalador.zip en una versión (Release) de GitHub.'
