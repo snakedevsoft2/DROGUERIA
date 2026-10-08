@@ -452,18 +452,37 @@ if ($Descarga) {
     # PowerShell 5.1 ese método separa las rutas con '\', fuera del formato
     # zip, y hay descompresores que lo dejan todo en una sola carpeta con
     # nombres como "recursos\app\artisan".
+    #
+    # Las carpetas vacías van como entradas propias (terminadas en '/'): sin
+    # bootstrap/cache ni storage/logs Laravel no arranca, y el instalador no
+    # las crea.
     Add-Type -AssemblyName System.IO.Compression, System.IO.Compression.FileSystem
     $raizZip = (Resolve-Path -LiteralPath $Salida).Path.TrimEnd('\') + '\'
     $archivoZip = [System.IO.Compression.ZipFile]::Open($zipDescarga, 'Create')
     try {
-        foreach ($f in Get-ChildItem -LiteralPath $Salida -Recurse -File -Force) {
+        foreach ($f in Get-ChildItem -LiteralPath $Salida -Recurse -Force) {
             $nombre = $f.FullName.Substring($raizZip.Length).Replace('\', '/')
-            [void][System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
-                $archivoZip, $f.FullName, $nombre, [System.IO.Compression.CompressionLevel]::Optimal)
+            if ($f.PSIsContainer) {
+                if (-not (Get-ChildItem -LiteralPath $f.FullName -Force | Select-Object -First 1)) {
+                    [void]$archivoZip.CreateEntry($nombre + '/')
+                }
+            } else {
+                [void][System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
+                    $archivoZip, $f.FullName, $nombre, [System.IO.Compression.CompressionLevel]::Optimal)
+            }
         }
     } finally {
         $archivoZip.Dispose()
     }
+
+    $archivoZip = [System.IO.Compression.ZipFile]::OpenRead($zipDescarga)
+    try {
+        $faltan = @('recursos/app/bootstrap/cache/', 'recursos/app/storage/logs/', 'recursos/app/storage/framework/views/') |
+            Where-Object { $n = $_; -not ($archivoZip.Entries | Where-Object { $_.FullName.StartsWith($n) } | Select-Object -First 1) }
+    } finally {
+        $archivoZip.Dispose()
+    }
+    if ($faltan) { throw ('Al zip le faltan carpetas que Laravel necesita: ' + ($faltan -join ', ')) }
     $mbZip = [math]::Round((Get-Item -LiteralPath $zipDescarga).Length / 1MB, 1)
     Ok "Listo: $zipDescarga ($mbZip MB)"
     Aviso 'Súbalo como Drogueria-Instalador.zip en una versión (Release) de GitHub.'
