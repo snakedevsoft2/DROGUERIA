@@ -355,11 +355,42 @@ Paso 'Generando la clave de seguridad...'
 Ok 'Clave generada.'
 
 $bd = "$destino\app\database\database.sqlite"
-if (-not (Test-Path $bd)) {
+
+# El instalador con datos (Instalar-Drogueria-con-datos.exe) trae los
+# productos, lotes y ventas del sitio web. Sólo se usan en un equipo que
+# todavía no tiene base: una instalación existente nunca se pisa (para eso
+# está la herramienta "Importar datos").
+$datosIncluidos = "$recursos\datos\database.sqlite"
+
+if (-not (Test-Path $bd) -and (Test-Path $datosIncluidos)) {
+    Paso 'Cargando los productos, lotes y ventas incluidos...'
+    Copy-Item -LiteralPath $datosIncluidos -Destination $bd
+    Ok 'Datos cargados.'
+} elseif (-not (Test-Path $bd)) {
     Paso 'Creando la base de datos...'
     New-Item -ItemType File -Path $bd | Out-Null
     Ok 'Base de datos creada (vacía).'
 } else {
+    if (Test-Path $datosIncluidos) {
+        # Una instalación anterior que nunca se llegó a usar tiene la base
+        # vacía: ahí sí se cargan los datos incluidos. Con productos, no.
+        $contar = Join-Path $env:TEMP 'drogueria-contar.php'
+        [System.IO.File]::WriteAllText($contar,
+            '<?php try { $p = new PDO("sqlite:".$argv[1]); echo (int) $p->query("SELECT COUNT(*) FROM products")->fetchColumn(); } catch (Throwable $e) { echo 0; }')
+        $productos = (& $php $contar $bd | Select-Object -Last 1)
+        Remove-Item -LiteralPath $contar -Force -ErrorAction SilentlyContinue
+
+        if ("$productos".Trim() -eq '0') {
+            Paso 'La base de este equipo está vacía: cargando los datos incluidos...'
+            foreach ($extra in @("$bd-wal", "$bd-shm")) {
+                if (Test-Path -LiteralPath $extra) { Remove-Item -LiteralPath $extra -Force }
+            }
+            Copy-Item -LiteralPath $datosIncluidos -Destination $bd -Force
+            Ok 'Datos cargados.'
+        } else {
+            Aviso 'Este equipo ya tenía datos: se conservan y NO se cargan los incluidos.'
+        }
+    }
     Paso 'Respaldando la base de datos antes de actualizarla...'
     & $php $artisan drogueria:respaldar --destino="$destino\respaldos" 2>&1 | Out-Null
     Ok 'Respaldo hecho.'

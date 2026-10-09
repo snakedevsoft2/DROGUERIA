@@ -43,6 +43,28 @@ Sin `-Usb` sólo arma la carpeta (`%USERPROFILE%\Drogueria-USB`). Con
 Reinstalar encima de una instalación existente **conserva** la base de
 datos y el `.env`: sirve para actualizar al cliente sin perderle las ventas.
 
+## Instalador de un solo archivo (`.exe`)
+
+Para entregarlo sin USB ni zip:
+
+```powershell
+.\instalador\construir-paquete.ps1 -Descarga                 # primero
+.\instalador\construir-exe.ps1                               # Instalar-Drogueria.exe
+.\instalador\construir-exe.ps1 -Datos C:\ruta\database.sqlite  # Instalar-Drogueria-con-datos.exe
+```
+
+El `.exe` lleva dentro el mismo `Drogueria-Instalador.zip`, pide permisos
+de administrador al abrirse (manifiesto), lo descomprime en una carpeta
+temporal y lanza `instalar.ps1` en su propia consola. Lo compila el
+`csc.exe` de Windows, como `Drogueria.exe`.
+
+Con `-Datos`, el paquete trae `recursos\datos\database.sqlite` y el
+asistente arranca con esos productos, lotes y ventas **si el equipo no
+tiene base o la tiene sin productos**. Una base con productos nunca se pisa.
+
+**El de datos no se publica**: lleva costos, ventas y las claves del
+programa. Se entrega en mano. El que va a GitHub es el sin datos.
+
 ## Compatibilidad: qué necesita el equipo del cliente
 
 **Nada preinstalado.** El paquete lleva su propio PHP, sus dependencias y
