@@ -6,6 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>{{ $title ?? config('app.name') }}</title>
+    <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -26,7 +27,7 @@
                         <img
                             src="{{ asset($logo) }}"
                             alt="{{ config('drogueria.name') }}"
-                            class="h-9 w-auto"
+                            class="h-11 w-auto"
                         >
                     @else
                         <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center">
