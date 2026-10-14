@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Batch;
+use App\Models\CashClosing;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleDetail;
@@ -80,6 +81,7 @@ class DemoSeeder extends Seeder
     /** Deja las tablas de la demo vacías para poder re-sembrar sin duplicar. */
     protected function reset(): void
     {
+        CashClosing::truncate();
         SaleDetail::truncate();
         Sale::truncate();
         Batch::truncate();
@@ -270,6 +272,7 @@ class DemoSeeder extends Seeder
                     'batch_id' => $batchId,
                     'quantity' => $quantity,
                     'unit_price' => $product->selling_price,
+                    'unit_cost' => $product->unit_cost,
                     'subtotal' => round($quantity * (float) $product->selling_price, 2),
                 ]))->forceFill(['created_at' => $at, 'updated_at' => $at])->save();
             }

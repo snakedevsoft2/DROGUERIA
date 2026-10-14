@@ -22,12 +22,13 @@ class WipeCommand extends Command
     protected $description = 'Vacía los datos de la droguería (inventario y ventas)';
 
     /** Orden de borrado: primero lo que apunta, después lo apuntado. */
-    protected const TABLES = ['sale_details', 'sales', 'batches', 'products'];
+    protected const TABLES = ['cash_closings', 'sale_details', 'sales', 'batches', 'products'];
 
     public function handle(): int
     {
         $tables = $this->option('ventas')
-            ? ['sale_details', 'sales']
+            // Sin ventas los cierres de caja no cuadran con nada: se van con ellas.
+            ? ['cash_closings', 'sale_details', 'sales']
             : self::TABLES;
 
         $connection = DB::connection();

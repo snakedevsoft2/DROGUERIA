@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Batch;
 use App\Models\Sale;
 use App\Models\SaleDetail;
+use App\Services\SalesSummary;
 use App\Support\AdminPassword;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -238,13 +239,7 @@ class ReportsComponent extends Component
     #[Computed]
     public function daily()
     {
-        // Truncating a timestamp to its date has no portable spelling, and
-        // this query is the only place the app depends on one.
-        $day = match (DB::connection()->getDriverName()) {
-            'pgsql' => 'created_at::date',
-            'sqlsrv' => 'CAST(created_at AS DATE)',
-            default => 'DATE(created_at)',
-        };
+        $day = SalesSummary::dayExpression('created_at');
 
         return $this->baseQuery()
             ->selectRaw("{$day} as day")

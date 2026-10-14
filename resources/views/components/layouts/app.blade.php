@@ -48,6 +48,7 @@
                             ['route' => 'inventory', 'label' => 'Inventario'],
                             ['route' => 'product-list', 'label' => 'Listado'],
                             ['route' => 'reports',   'label' => 'Reportes'],
+                            ['route' => 'cash-closing', 'label' => 'Cierre de caja'],
                         ];
                     @endphp
 

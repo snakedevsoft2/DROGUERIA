@@ -123,7 +123,7 @@ class EliminarVentaTest extends TestCase
 
     public function test_usa_la_clave_nueva_cuando_se_cambia(): void
     {
-        AdminPassword::set('susalud2026');
+        AdminPassword::set('acpharma2026');
 
         Livewire::test(ReportsComponent::class)
             ->call('confirmDeleteSale', $this->sale->id)
@@ -133,7 +133,7 @@ class EliminarVentaTest extends TestCase
 
         Livewire::test(ReportsComponent::class)
             ->call('confirmDeleteSale', $this->sale->id)
-            ->set('deletePassword', 'susalud2026')
+            ->set('deletePassword', 'acpharma2026')
             ->call('deleteSale')
             ->assertHasNoErrors();
 

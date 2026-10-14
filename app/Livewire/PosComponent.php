@@ -423,6 +423,10 @@ class PosComponent extends Component
             throw new Exception("Stock insuficiente para {$item['name']}.");
         }
 
+        // El costo se lee aquí y no se lleva en el carrito: el carrito viaja
+        // al navegador y el cajero no tiene por qué ver lo que cuesta cada cosa.
+        $unitCost = Product::find($item['id'])?->unit_cost;
+
         foreach ($batches as $batch) {
             if ($pending <= 0) {
                 break;
@@ -442,6 +446,9 @@ class PosComponent extends Component
                 'batch_id' => $batch->id,
                 'quantity' => $deduct,
                 'unit_price' => $item['unit_price'],
+                // Copia del costo: la ganancia de esta venta no cambia si
+                // mañana se actualiza el costo del producto.
+                'unit_cost' => $unitCost,
                 'subtotal' => round($deduct * $item['unit_price'], 2),
             ]);
         }

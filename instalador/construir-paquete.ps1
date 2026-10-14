@@ -227,7 +227,7 @@ Ok ("Runtime de Visual C++ incluido ($($dllsVC.Count) bibliotecas).")
 # en el equipo del cliente y el error aparecería allá, no aquí.
 Paso 'Verificando las extensiones...'
 $faltan = & (Join-Path $php 'php.exe') -r @'
-$necesarias = ['mbstring','fileinfo','openssl','curl','zip','intl','pdo_sqlite','sqlite3','gd'];
+$necesarias = ['mbstring','fileinfo','openssl','curl','zip','intl','pdo_sqlite','sqlite3','gd','dom'];
 echo implode(',', array_diff($necesarias, get_loaded_extensions()));
 '@
 if ($LASTEXITCODE -ne 0) { throw 'El PHP empaquetado no arranca.' }

@@ -5,6 +5,10 @@
 @source '../**/*.blade.php';
 @source '../**/*.js';
 
+/* Impresión en el rollo de la tiquetera (58 u 80 mm). Lo pensado para hoja
+   carta no cabe ahí: las tarjetas y la tabla se salen del papel. */
+@custom-variant tirilla (@media print and (max-width: 120mm));
+
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';

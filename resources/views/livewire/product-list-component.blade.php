@@ -1,12 +1,12 @@
 <div class="p-6 print:p-0">
-    <div class="max-w-7xl mx-auto flex flex-col gap-6">
+    <div class="max-w-7xl mx-auto flex flex-col gap-6 tirilla:gap-3">
 
         <div class="flex flex-wrap items-center justify-between gap-4">
             <div>
-                <h1 class="text-2xl font-extrabold text-slate-900">Listado de productos</h1>
-                <p class="text-sm text-slate-500">
+                <h1 class="text-2xl tirilla:text-lg font-extrabold text-slate-900">Listado de productos</h1>
+                <p class="text-sm tirilla:text-xs text-slate-500">
                     Todos los productos guardados con su costo y precio de venta por unidad.
-                    <span class="hidden print:inline">{{ config('drogueria.name') }} &middot; {{ now()->format('d/m/Y') }}</span>
+                    <span class="hidden print:inline tirilla:block">{{ config('drogueria.name') }} &middot; {{ now()->format('d/m/Y') }}</span>
                 </p>
             </div>
 
@@ -19,21 +19,21 @@
             </button>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 print:grid-cols-3 gap-4">
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 print:shadow-none">
-                <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Costo total del inventario</p>
-                <p class="text-2xl font-extrabold text-slate-900">${{ number_format($this->inventoryCost, 0, ',', '.') }}</p>
-                <p class="text-xs text-slate-400">Unidades en stock &times; costo por unidad</p>
+        <div class="grid grid-cols-1 sm:grid-cols-3 print:grid-cols-3 tirilla:grid-cols-1 gap-4 tirilla:gap-1">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 print:shadow-none tirilla:p-0 tirilla:border-0 tirilla:rounded-none tirilla:flex tirilla:flex-wrap tirilla:items-baseline tirilla:justify-between tirilla:gap-x-2">
+                <p class="text-xs tirilla:text-[10px] font-bold uppercase tracking-wider tirilla:tracking-normal text-slate-500">Costo total del inventario</p>
+                <p class="text-2xl tirilla:text-sm font-extrabold text-slate-900">${{ number_format($this->inventoryCost, 0, ',', '.') }}</p>
+                <p class="text-xs text-slate-400 tirilla:hidden">Unidades en stock &times; costo por unidad</p>
             </div>
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 print:shadow-none">
-                <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Total de venta del inventario</p>
-                <p class="text-2xl font-extrabold text-slate-900">${{ number_format($this->inventorySaleValue, 0, ',', '.') }}</p>
-                <p class="text-xs text-slate-400">Unidades en stock &times; precio de venta</p>
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 print:shadow-none tirilla:p-0 tirilla:border-0 tirilla:rounded-none tirilla:flex tirilla:flex-wrap tirilla:items-baseline tirilla:justify-between tirilla:gap-x-2">
+                <p class="text-xs tirilla:text-[10px] font-bold uppercase tracking-wider tirilla:tracking-normal text-slate-500">Total de venta del inventario</p>
+                <p class="text-2xl tirilla:text-sm font-extrabold text-slate-900">${{ number_format($this->inventorySaleValue, 0, ',', '.') }}</p>
+                <p class="text-xs text-slate-400 tirilla:hidden">Unidades en stock &times; precio de venta</p>
             </div>
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 print:shadow-none">
-                <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Ganancia estimada</p>
-                <p class="text-2xl font-extrabold text-emerald-600">${{ number_format($this->inventorySaleValue - $this->inventoryCost, 0, ',', '.') }}</p>
-                <p class="text-xs text-slate-400">Venta menos costo{{ trim($search) !== '' ? ' (solo productos filtrados)' : '' }}</p>
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 print:shadow-none tirilla:p-0 tirilla:border-0 tirilla:rounded-none tirilla:flex tirilla:flex-wrap tirilla:items-baseline tirilla:justify-between tirilla:gap-x-2">
+                <p class="text-xs tirilla:text-[10px] font-bold uppercase tracking-wider tirilla:tracking-normal text-slate-500">Ganancia estimada</p>
+                <p class="text-2xl tirilla:text-sm font-extrabold text-emerald-600">${{ number_format($this->inventorySaleValue - $this->inventoryCost, 0, ',', '.') }}</p>
+                <p class="text-xs text-slate-400 tirilla:hidden">Venta menos costo{{ trim($search) !== '' ? ' (solo productos filtrados)' : '' }}</p>
             </div>
         </div>
 
@@ -58,10 +58,13 @@
             <span class="text-sm text-slate-400">{{ $products->count() }} productos</span>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden print:shadow-none print:rounded-none">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden print:shadow-none print:rounded-none tirilla:border-0">
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
+                {{-- En el rollo no caben cinco columnas: cada producto pasa a
+                     ser un bloque, con el nombre arriba y las cifras debajo
+                     en dos columnas, cada una con su etiqueta. --}}
+                <table class="w-full text-left border-collapse tirilla:block">
+                    <thead class="tirilla:hidden">
                         <tr class="bg-slate-100 text-slate-500 text-xs uppercase tracking-wider">
                             <th class="p-4 print:p-2">Producto</th>
                             <th class="p-4 print:p-2 text-right">Stock</th>
@@ -70,13 +73,14 @@
                             <th class="p-4 print:p-2 text-right">Ganancia por unidad</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100 text-slate-700 text-sm">
+                    <tbody class="divide-y divide-slate-100 text-slate-700 text-sm tirilla:block tirilla:text-xs tirilla:border-t tirilla:border-slate-300">
                         @forelse ($products as $product)
                             <tr wire:key="list-{{ $product->id }}" @class([
                                 'hover:bg-slate-50 transition break-inside-avoid',
+                                'tirilla:grid tirilla:grid-cols-2 tirilla:gap-x-3 tirilla:py-1.5',
                                 'opacity-60' => ! $product->is_active,
                             ])>
-                                <td class="p-4 print:p-2">
+                                <td class="p-4 print:p-2 tirilla:p-0 tirilla:col-span-2">
                                     <p class="font-semibold text-slate-800">
                                         {{ $product->name }}
                                         @unless ($product->is_active)
@@ -87,22 +91,26 @@
                                         {{ $product->barcode }} @if ($product->presentation) &middot; {{ $product->presentation }} @endif
                                     </p>
                                 </td>
-                                <td class="p-4 print:p-2 text-right text-slate-600">
-                                    {{ number_format((int) $product->total_stock, 0, ',', '.') }}
+                                <td class="p-4 print:p-2 tirilla:p-0 tirilla:flex tirilla:flex-wrap tirilla:gap-x-1 text-right text-slate-600">
+                                    <span class="hidden tirilla:inline">Stock</span>
+                                    <span class="tirilla:ml-auto">{{ number_format((int) $product->total_stock, 0, ',', '.') }}</span>
                                 </td>
-                                <td class="p-4 print:p-2 text-right text-slate-600">
-                                    ${{ number_format($product->unit_cost, 0, ',', '.') }}
+                                <td class="p-4 print:p-2 tirilla:p-0 tirilla:flex tirilla:flex-wrap tirilla:gap-x-1 text-right text-slate-600">
+                                    <span class="hidden tirilla:inline">Costo</span>
+                                    <span class="tirilla:ml-auto">${{ number_format($product->unit_cost, 0, ',', '.') }}</span>
                                 </td>
-                                <td class="p-4 print:p-2 text-right font-semibold text-slate-800">
-                                    ${{ number_format($product->selling_price, 0, ',', '.') }}
+                                <td class="p-4 print:p-2 tirilla:p-0 tirilla:flex tirilla:flex-wrap tirilla:gap-x-1 text-right font-semibold text-slate-800">
+                                    <span class="hidden tirilla:inline font-normal text-slate-600">Venta</span>
+                                    <span class="tirilla:ml-auto">${{ number_format($product->selling_price, 0, ',', '.') }}</span>
                                 </td>
-                                <td class="p-4 print:p-2 text-right font-semibold text-emerald-600">
-                                    ${{ number_format($product->selling_price - $product->unit_cost, 0, ',', '.') }}
+                                <td class="p-4 print:p-2 tirilla:p-0 tirilla:flex tirilla:flex-wrap tirilla:gap-x-1 text-right font-semibold text-emerald-600">
+                                    <span class="hidden tirilla:inline font-normal text-slate-600">Ganancia</span>
+                                    <span class="tirilla:ml-auto">${{ number_format($product->selling_price - $product->unit_cost, 0, ',', '.') }}</span>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5"class="p-10 text-center text-slate-400">
+                                <td colspan="5" class="p-10 text-center text-slate-400">
                                     No se encontraron productos.
                                 </td>
                             </tr>

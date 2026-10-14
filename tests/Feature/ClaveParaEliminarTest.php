@@ -250,8 +250,8 @@ class ClaveParaEliminarTest extends TestCase
     {
         Livewire::test(ReportsComponent::class)
             ->set('current_password', '1234')
-            ->set('new_password', 'susalud2026')
-            ->set('new_password_confirmation', 'susalud2026')
+            ->set('new_password', 'acpharma2026')
+            ->set('new_password_confirmation', 'acpharma2026')
             ->call('changePassword')
             ->assertHasNoErrors();
 
@@ -265,7 +265,7 @@ class ClaveParaEliminarTest extends TestCase
 
         Livewire::test(InventoryComponent::class)
             ->call('confirmDelete', $product->id)
-            ->set('deletePassword', 'susalud2026')
+            ->set('deletePassword', 'acpharma2026')
             ->call('deleteProduct')
             ->assertHasNoErrors();
 

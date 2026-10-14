@@ -173,7 +173,7 @@ if ($enUso.Count -gt 0) {
 
 # --- 2. Datos del negocio --------------------------------------------------
 
-$nombreTienda = 'Droguería SUSALUD'
+$nombreTienda = 'Droguería ACPHARMA'
 $ciudad = 'Jamundí'
 $telefono = ''
 $anchoRollo = '80mm'
@@ -330,6 +330,15 @@ Titulo 'PASO 4 de 6  -  CONFIGURACIÓN'
 $env_destino = "$destino\app\.env"
 
 if (Test-Path $env_destino) {
+    # La droguería pasó de llamarse SUSALUD a ACPHARMA. Una actualización no
+    # toca los ajustes, así que sin esto el equipo seguiría con el nombre
+    # viejo. Sólo se cambia ese nombre; uno distinto escrito a mano se respeta.
+    $ajustes = [System.IO.File]::ReadAllText($env_destino)
+    $renombrado = [regex]::Replace($ajustes, '(?im)^((?:APP|STORE)_NAME=)[^\r\n]*su\s*salud[^\r\n]*', '${1}"Droguería ACPHARMA"')
+    if ($renombrado -ne $ajustes) {
+        [System.IO.File]::WriteAllText($env_destino, $renombrado, (New-Object System.Text.UTF8Encoding $false))
+        Ok 'Nombre de la droguería actualizado a ACPHARMA.'
+    }
     Ok 'Se conserva el archivo de ajustes existente.'
 } else {
     Paso 'Creando el archivo de ajustes...'
