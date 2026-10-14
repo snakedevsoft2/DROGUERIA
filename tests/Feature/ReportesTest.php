@@ -90,4 +90,37 @@ class ReportesTest extends TestCase
             ->call('toggleSale', $sale->id)
             ->assertSee('Producto retirado');
     }
+
+    public function test_los_mas_vendidos_incluyen_productos_eliminados(): void
+    {
+        $sale = $this->venta(15000);
+
+        $product = Product::create([
+            'barcode' => '7709999999999',
+            'name' => 'Producto retirado',
+            'cost_price' => 1000,
+            'selling_price' => 5000,
+            'min_stock' => 1,
+            'is_active' => true,
+        ]);
+
+        SaleDetail::create([
+            'sale_id' => $sale->id,
+            'product_id' => $product->id,
+            'product_name' => $product->name,
+            'quantity' => 3,
+            'unit_price' => 5000,
+            'subtotal' => 15000,
+        ]);
+
+        $product->delete();
+
+        // Lo vendido no desaparece del ranking porque el producto ya no esté
+        // en el catálogo: el informe en PDF tampoco lo saca.
+        $top = Livewire::test(ReportsComponent::class)->instance()->topProducts;
+
+        $this->assertCount(1, $top);
+        $this->assertSame('Producto retirado', $top->first()->name);
+        $this->assertSame(3, (int) $top->first()->units);
+    }
 }

@@ -255,15 +255,21 @@ class ReportsComponent extends Component
     {
         [$from, $to] = $this->range();
 
+        // Un producto borrado del catálogo sigue contando, con el nombre que
+        // se copió en la venta: igual que en el informe en PDF.
+        $nombre = "COALESCE(products.name, sale_details.product_name, 'Producto eliminado')";
+
         return SaleDetail::query()
             ->join('sales', 'sales.id', '=', 'sale_details.sale_id')
-            ->join('products', 'products.id', '=', 'sale_details.product_id')
+            ->leftJoin('products', 'products.id', '=', 'sale_details.product_id')
             ->whereBetween('sales.created_at', [$from, $to])
             ->when($this->paymentMethod !== 'all', fn ($q) => $q->where('sales.payment_method', $this->paymentMethod))
-            ->select('products.name', 'products.presentation')
+            ->selectRaw("{$nombre} as name")
+            ->addSelect('products.presentation')
             ->selectRaw('SUM(sale_details.quantity) as units')
             ->selectRaw('SUM(sale_details.subtotal) as revenue')
-            ->groupBy('products.id', 'products.name', 'products.presentation')
+            ->groupBy('sale_details.product_id', 'products.presentation')
+            ->groupByRaw($nombre)
             ->orderByDesc(DB::raw('SUM(sale_details.quantity)'))
             ->take(10)
             ->get();

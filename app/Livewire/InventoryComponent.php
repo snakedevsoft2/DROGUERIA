@@ -449,6 +449,18 @@ class InventoryComponent extends Component
     protected function nombreEnumerado(string $name, ?int $ignoreId = null): string
     {
         $nombre = trim($name);
+
+        // Sólo se numera si otro producto ya tiene exactamente este nombre.
+        // Que existan "Acetaminofén (2)" o "(3)" no es motivo para renumerar
+        // al "Acetaminofén" original cada vez que se le cambia el precio.
+        $repetido = Product::where('name', $nombre)
+            ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))
+            ->exists();
+
+        if (! $repetido) {
+            return $nombre;
+        }
+
         $base = preg_replace('/\s*\(\d+\)$/', '', $nombre);
 
         $usados = Product::query()
@@ -934,16 +946,34 @@ class InventoryComponent extends Component
 
     protected function batchRowRules(): array
     {
-        return [
+        $rules = [
             'batchRows' => ['array'],
             // El número lo pone el sistema si se deja en blanco, así que aquí
             // ya viene lleno; la regla sólo cuida el largo.
             'batchRows.*.batch_number' => ['required', 'string', 'max:100'],
             'batchRows.*.barcode' => ['nullable', 'string', 'max:64'],
-            'batchRows.*.expiration_date' => ['required', 'date', 'after:today'],
             'batchRows.*.stock' => ['required', 'integer', 'min:0'],
             'batchRows.*.is_active' => ['boolean'],
         ];
+
+        // Un lote guardado que ya venció sigue apareciendo en la ficha: si se
+        // le exigiera una fecha futura, el producto no se podría volver a
+        // guardar ni para cambiarle el precio. La fecha futura sólo se pide a
+        // los lotes nuevos y a los que se les cambia el vencimiento.
+        $guardadas = Batch::whereIn('id', array_filter(array_column($this->batchRows, 'id')))
+            ->pluck('expiration_date', 'id');
+
+        foreach ($this->batchRows as $i => $row) {
+            $sinCambio = $row['id']
+                && isset($guardadas[$row['id']])
+                && (string) $row['expiration_date'] === (string) $guardadas[$row['id']];
+
+            $rules["batchRows.{$i}.expiration_date"] = $sinCambio
+                ? ['required', 'date']
+                : ['required', 'date', 'after:today'];
+        }
+
+        return $rules;
     }
 
     /** Nombres legibles: "el campo batchRows.0.batch_number" no le dice nada a nadie. */

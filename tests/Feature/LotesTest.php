@@ -280,6 +280,53 @@ class LotesTest extends TestCase
             ->assertHasErrors('batchRows.0.expiration_date');
     }
 
+    public function test_un_producto_con_un_lote_ya_vencido_se_puede_editar(): void
+    {
+        $product = $this->producto();
+        $vencido = Batch::create([
+            'product_id' => $product->id,
+            'batch_number' => 'L-VIEJO',
+            'expiration_date' => now()->subMonth()->toDateString(),
+            'stock' => 0,
+            'is_active' => true,
+        ]);
+
+        // El lote vencido sigue en la ficha; eso no puede impedir cambiar el
+        // precio del producto.
+        Livewire::test(InventoryComponent::class)
+            ->call('editProduct', $product->id)
+            ->set('clavePassword', AdminPassword::INICIAL)->call('confirmarClave')
+            ->set('selling_price', 600)
+            ->call('saveProduct')
+            ->assertHasNoErrors();
+
+        $this->assertSame(600.0, $product->fresh()->selling_price);
+        $this->assertSame(now()->subMonth()->toDateString(), $vencido->fresh()->expiration_date);
+    }
+
+    public function test_a_un_lote_guardado_no_se_le_pone_una_fecha_vencida(): void
+    {
+        $product = $this->producto();
+        Batch::create([
+            'product_id' => $product->id,
+            'batch_number' => 'L-0001',
+            'expiration_date' => now()->addYear()->toDateString(),
+            'stock' => 10,
+            'is_active' => true,
+        ]);
+
+        $componente = Livewire::test(InventoryComponent::class)
+            ->call('editProduct', $product->id)
+            ->set('clavePassword', AdminPassword::INICIAL)->call('confirmarClave');
+
+        $filas = $componente->get('batchRows');
+        $filas[0]['expiration_date'] = now()->subDay()->toDateString();
+
+        $componente->set('batchRows', $filas)
+            ->call('saveProduct')
+            ->assertHasErrors('batchRows.0.expiration_date');
+    }
+
     public function test_al_escribir_un_codigo_repetido_se_avisa_pero_no_se_fusiona_solo(): void
     {
         $product = $this->producto();
@@ -359,6 +406,39 @@ class LotesTest extends TestCase
             ->assertHasNoErrors();
 
         $this->assertDatabaseHas('products', ['name' => 'Acetaminofén 500 mg (2)']);
+    }
+
+    /** Abre la ficha con la clave, le cambia el precio y la guarda. */
+    protected function cambiarPrecio(Product $product, int $precio): void
+    {
+        Livewire::test(InventoryComponent::class)
+            ->call('editProduct', $product->id)
+            ->set('clavePassword', AdminPassword::INICIAL)->call('confirmarClave')
+            ->set('selling_price', $precio)
+            ->call('saveProduct')
+            ->assertHasNoErrors();
+    }
+
+    public function test_editar_el_producto_original_no_le_cambia_el_nombre(): void
+    {
+        $original = $this->producto('7701111111111');
+        $this->producto('7702222222222')->update(['name' => 'Acetaminofén 500 mg (2)']);
+
+        $this->cambiarPrecio($original, 600);
+
+        $this->assertSame('Acetaminofén 500 mg', $original->fresh()->name);
+    }
+
+    public function test_editar_un_producto_numerado_no_le_cambia_el_numero(): void
+    {
+        $this->producto('7701111111111');
+        $segundo = $this->producto('7702222222222');
+        $segundo->update(['name' => 'Acetaminofén 500 mg (2)']);
+        $this->producto('7703333333333')->update(['name' => 'Acetaminofén 500 mg (3)']);
+
+        $this->cambiarPrecio($segundo, 600);
+
+        $this->assertSame('Acetaminofén 500 mg (2)', $segundo->fresh()->name);
     }
 
     public function test_un_renglon_en_blanco_no_estorba_para_guardar_el_producto(): void

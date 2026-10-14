@@ -44,10 +44,12 @@
 
             <div class="col-span-7 md:col-span-3">
                 <label class="md:hidden block text-[10px] font-semibold text-slate-400 uppercase mb-1">Vence *</label>
+                {{-- Sin "min" en los lotes guardados: uno ya vencido haría que el
+                     navegador se negara a enviar el formulario. --}}
                 <input
                     type="date"
                     wire:model="batchRows.{{ $i }}.expiration_date"
-                    min="{{ now()->addDay()->toDateString() }}"
+                    @unless ($row['id']) min="{{ now()->addDay()->toDateString() }}" @endunless
                     class="w-full px-3 py-2 bg-white md:bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-sm"
                 >
                 @error("batchRows.{$i}.expiration_date") <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror

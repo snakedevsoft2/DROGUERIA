@@ -18,7 +18,7 @@ class ReceiptController extends Controller
 
         return view($sheet ? 'pdf.invoice-sheet' : 'pdf.invoice', [
             'sale' => $sale,
-            'lines' => $this->lines($sale),
+            'lines' => $sale->receiptLines(),
             // Sólo se imprime solo si se pide explícitamente (?print=1).
             'autoPrint' => $request->boolean('print'),
             // Dentro del modal del POS la barra de botones sobra: el modal
@@ -41,26 +41,5 @@ class ReceiptController extends Controller
         }
 
         return null;
-    }
-
-    /**
-     * El descuento de stock es FEFO, así que un mismo producto puede quedar
-     * repartido en varios sale_details (uno por lote). En el comprobante el
-     * cliente debe ver una sola línea por producto y precio.
-     */
-    protected function lines(Sale $sale)
-    {
-        return $sale->details
-            ->groupBy(fn ($detail) => $detail->product_id.'-'.$detail->unit_price)
-            ->map(fn ($group) => (object) [
-                'name' => $group->first()->product?->name
-                    ?? $group->first()->product_name
-                    ?? 'Producto eliminado',
-                'presentation' => $group->first()->product?->presentation,
-                'unit_price' => (float) $group->first()->unit_price,
-                'quantity' => (int) $group->sum('quantity'),
-                'subtotal' => (float) $group->sum('subtotal'),
-            ])
-            ->values();
     }
 }

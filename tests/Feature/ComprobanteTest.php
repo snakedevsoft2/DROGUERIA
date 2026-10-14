@@ -121,4 +121,46 @@ class ComprobanteTest extends TestCase
         // Las tres unidades quedan en un renglón, con el precio de cada una.
         $this->assertStringContainsString('$12.500', $html);
     }
+
+    public function test_dos_productos_eliminados_con_el_mismo_precio_no_se_funden(): void
+    {
+        $otro = Product::create([
+            'barcode' => '7709876543210',
+            'name' => 'Loratadina 10 mg',
+            'cost_price' => 4000,
+            'selling_price' => 12500,
+            'min_stock' => 5,
+            'is_active' => true,
+        ]);
+
+        SaleDetail::create([
+            'sale_id' => $this->sale->id,
+            'product_id' => $otro->id,
+            'product_name' => $otro->name,
+            'quantity' => 1,
+            'unit_price' => 12500,
+            'subtotal' => 12500,
+        ]);
+
+        // Al borrarlos los dos quedan sin id; lo que los distingue es el nombre.
+        $this->product->delete();
+        $otro->delete();
+
+        $this->get(route('receipt', $this->sale))
+            ->assertOk()
+            ->assertSee('Amoxicilina 500 mg')
+            ->assertSee('Loratadina 10 mg');
+    }
+
+    public function test_el_tiquete_termico_usa_el_nombre_guardado_del_producto_eliminado(): void
+    {
+        $this->product->delete();
+
+        // La tiquetera arma el papel con estos mismos renglones.
+        $lineas = $this->sale->fresh()->receiptLines();
+
+        $this->assertCount(1, $lineas);
+        $this->assertSame('Amoxicilina 500 mg', $lineas->first()->name);
+        $this->assertSame(2, $lineas->first()->quantity);
+    }
 }

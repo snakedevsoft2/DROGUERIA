@@ -57,7 +57,9 @@ class ReceiptPrinter
         try {
             $printer = new Printer($this->connector(), $this->profile());
 
-            $this->compose($printer, $sale, $this->lines($sale));
+            // Los mismos renglones que la vista previa en pantalla, para que
+            // el papel y el comprobante digan exactamente lo mismo.
+            $this->compose($printer, $sale, $sale->receiptLines());
         } catch (Exception $e) {
             // El destructor del conector avisa por E_USER_NOTICE si el búfer
             // quedó sin vaciar; cerrarlo aquí evita ese ruido en el log.
@@ -391,27 +393,6 @@ class ReceiptPrinter
             // tiquete, que a estas alturas ya está armado.
             report($e);
         }
-    }
-
-    /**
-     * El descuento de stock es FEFO, así que un producto puede quedar
-     * repartido en varios sale_details. El cliente ve una línea por producto.
-     *
-     * Mismo agrupamiento que ReceiptController, para que el papel y la vista
-     * previa en pantalla digan exactamente lo mismo.
-     */
-    protected function lines(Sale $sale): Collection
-    {
-        return $sale->details
-            ->groupBy(fn ($detail) => $detail->product_id.'-'.$detail->unit_price)
-            ->map(fn ($group) => (object) [
-                'name' => $group->first()->product?->name ?? 'Producto eliminado',
-                'presentation' => $group->first()->product?->presentation,
-                'unit_price' => (float) $group->first()->unit_price,
-                'quantity' => (int) $group->sum('quantity'),
-                'subtotal' => (float) $group->sum('subtotal'),
-            ])
-            ->values();
     }
 
     /** Mismo formato de moneda que el comprobante: miles con punto, sin centavos. */
