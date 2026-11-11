@@ -13,7 +13,7 @@
             "dest": "/$1/$2"
         },
         {
-            "src": "/(favicon\\.ico|robots\\.txt)",
+            "src": "/(favicon\\.ico|robots\\.txt|manifest\\.webmanifest)",
             "dest": "/$1"
         },
         {

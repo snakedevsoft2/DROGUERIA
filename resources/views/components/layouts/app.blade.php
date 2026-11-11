@@ -8,6 +8,13 @@
     <title>{{ $title ?? config('app.name') }}</title>
     <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
 
+    {{-- Nombre e icono que toma Chrome/Edge al "Instalar como aplicación".
+         Sin esto el navegador usa el título de la página y una letra como icono. --}}
+    <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/icono-180.png') }}">
+    <meta name="application-name" content="{{ config('drogueria.name') }}">
+    <meta name="theme-color" content="#ffffff">
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="h-full bg-slate-100 font-sans antialiased text-slate-800">
