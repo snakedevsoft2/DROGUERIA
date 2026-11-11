@@ -22,7 +22,10 @@ class ProductListComponent extends Component
     #[Url(as: 'q', except: '')]
     public string $search = '';
 
-    #[Url(as: 'inactivos', except: false)]
+    // 'except' tiene que ser el valor por defecto: así la dirección sólo
+    // lleva ?inactivos=false cuando se desmarcan, y recargar la página
+    // respeta lo que se eligió.
+    #[Url(as: 'inactivos', except: true)]
     public bool $showInactive = true;
 
     public function render()

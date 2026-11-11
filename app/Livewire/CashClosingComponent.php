@@ -51,8 +51,8 @@ class CashClosingComponent extends Component
 
     public function mount(): void
     {
-        $this->from = $this->from ?: now()->startOfMonth()->toDateString();
-        $this->to = $this->to ?: now()->toDateString();
+        $this->from = SalesSummary::validDay($this->from) ?? now()->startOfMonth()->toDateString();
+        $this->to = SalesSummary::validDay($this->to) ?? now()->toDateString();
 
         // La base casi siempre es la misma de un día para otro.
         $ultimo = CashClosing::latestClosing();
@@ -208,7 +208,10 @@ class CashClosingComponent extends Component
     #[Computed]
     public function report(): array
     {
-        $periodo = SalesSummary::days($this->from ?: now()->toDateString(), $this->to ?: now()->toDateString());
+        $periodo = SalesSummary::days(
+            SalesSummary::validDay($this->from) ?? now()->toDateString(),
+            SalesSummary::validDay($this->to) ?? now()->toDateString(),
+        );
 
         return [
             'from' => $periodo->from,

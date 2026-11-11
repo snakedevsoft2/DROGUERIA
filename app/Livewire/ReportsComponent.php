@@ -35,8 +35,8 @@ class ReportsComponent extends Component
 
     public function mount(): void
     {
-        $this->from = $this->from ?: now()->toDateString();
-        $this->to = $this->to ?: now()->toDateString();
+        $this->from = SalesSummary::validDay($this->from) ?? now()->toDateString();
+        $this->to = SalesSummary::validDay($this->to) ?? now()->toDateString();
     }
 
     // --- Clave del dueño ---
@@ -176,8 +176,8 @@ class ReportsComponent extends Component
     /** Inclusive day boundaries for the selected range. */
     protected function range(): array
     {
-        $from = Carbon::parse($this->from ?: now())->startOfDay();
-        $to = Carbon::parse($this->to ?: now())->endOfDay();
+        $from = Carbon::parse(SalesSummary::validDay($this->from) ?? now()->toDateString())->startOfDay();
+        $to = Carbon::parse(SalesSummary::validDay($this->to) ?? now()->toDateString())->endOfDay();
 
         return $to->lt($from) ? [$to->copy()->startOfDay(), $from->copy()->endOfDay()] : [$from, $to];
     }

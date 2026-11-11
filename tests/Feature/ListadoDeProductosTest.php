@@ -57,4 +57,22 @@ class ListadoDeProductosTest extends TestCase
             ->set('search', 'acetaminofen')->assertSee('ACETAMINOFEN')
             ->set('search', 'IBUPROFENO')->assertSee('ibuprofeno');
     }
+
+    public function test_desmarcar_inactivos_se_conserva_al_recargar(): void
+    {
+        $this->producto('Activo');
+        $this->producto('Retirado', activo: false);
+
+        // Por defecto se incluyen; la dirección sólo lleva el filtro cuando
+        // se desmarca, y al volver con ?inactivos=false siguen ocultos.
+        Livewire::test(ProductListComponent::class)
+            ->assertSet('showInactive', true)
+            ->assertSee('Retirado');
+
+        Livewire::withQueryParams(['inactivos' => 'false'])
+            ->test(ProductListComponent::class)
+            ->assertSet('showInactive', false)
+            ->assertSee('Activo')
+            ->assertDontSee('Retirado');
+    }
 }

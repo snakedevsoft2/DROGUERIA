@@ -39,6 +39,22 @@ class SalesSummary
         return $to->lt($from) ? new self($to, $from) : new self($from, $to);
     }
 
+    /**
+     * La fecha tal cual si es un día real en formato AAAA-MM-DD; si no, null.
+     *
+     * Las fechas de los informes viajan en la dirección (?desde=...&hasta=...)
+     * y cualquiera puede escribir ahí lo que quiera: sin este filtro, una
+     * fecha mal escrita tumbaba la página con un error 500.
+     */
+    public static function validDay(?string $value): ?string
+    {
+        if ($value === null || ! preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $value, $m)) {
+            return null;
+        }
+
+        return checkdate((int) $m[2], (int) $m[3], (int) $m[1]) ? $value : null;
+    }
+
     /** Días completos, del primero al último inclusive. */
     public static function days(string $from, string $to): self
     {

@@ -135,6 +135,14 @@ class PosComponent extends Component
             return;
         }
 
+        // El buscador ya los esconde, pero este método se puede llamar con
+        // cualquier id: un producto desactivado no se vende.
+        if (! $product->is_active) {
+            $this->dispatch('toast', type: 'error', message: "{$product->name} está desactivado y no se puede vender.");
+
+            return;
+        }
+
         $availableStock = (int) ($product->total_stock ?? 0);
 
         if ($availableStock <= 0) {
@@ -411,6 +419,16 @@ class PosComponent extends Component
     {
         $pending = (int) $item['quantity'];
 
+        // El producto pudo desactivarse en el inventario mientras estaba en
+        // el carrito. La excepción deshace la venta entera.
+        $product = Product::find($item['id']);
+
+        if (! $product || ! $product->is_active) {
+            throw new Exception($product
+                ? "{$item['name']} fue desactivado en el inventario; quítelo del carrito."
+                : "{$item['name']} ya no existe en el inventario; quítelo del carrito.");
+        }
+
         $batches = Batch::where('product_id', $item['id'])
             ->where('is_active', true)
             ->where('stock', '>', 0)
@@ -425,7 +443,7 @@ class PosComponent extends Component
 
         // El costo se lee aquí y no se lleva en el carrito: el carrito viaja
         // al navegador y el cajero no tiene por qué ver lo que cuesta cada cosa.
-        $unitCost = Product::find($item['id'])?->unit_cost;
+        $unitCost = $product->unit_cost;
 
         foreach ($batches as $batch) {
             if ($pending <= 0) {

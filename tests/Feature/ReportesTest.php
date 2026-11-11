@@ -123,4 +123,14 @@ class ReportesTest extends TestCase
         $this->assertSame('Producto retirado', $top->first()->name);
         $this->assertSame(3, (int) $top->first()->units);
     }
+
+    public function test_una_fecha_mal_escrita_en_la_direccion_no_tumba_la_pagina(): void
+    {
+        $this->get('/reportes?desde=abc&hasta=2026-02-31')->assertOk();
+
+        Livewire::withQueryParams(['desde' => 'abc', 'hasta' => '2026-02-31'])
+            ->test(ReportsComponent::class)
+            ->assertSet('from', now()->toDateString())
+            ->assertSet('to', now()->toDateString());
+    }
 }

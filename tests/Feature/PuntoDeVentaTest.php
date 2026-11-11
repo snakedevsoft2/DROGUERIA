@@ -175,4 +175,31 @@ class PuntoDeVentaTest extends TestCase
                 $this->assertSame(0.0, $component->instance()->total);
             });
     }
+
+    public function test_no_agrega_al_carrito_un_producto_desactivado(): void
+    {
+        $product = $this->producto(['is_active' => false]);
+
+        Livewire::test(PosComponent::class)
+            ->call('addToCart', $product->id)
+            ->assertSet('cart', [])
+            ->assertDispatched('toast', type: 'error');
+    }
+
+    public function test_no_vende_un_producto_que_se_desactivo_estando_en_el_carrito(): void
+    {
+        $product = $this->producto([], stock: 10);
+
+        $component = Livewire::test(PosComponent::class)
+            ->call('addToCart', $product->id);
+
+        $product->update(['is_active' => false]);
+
+        $component->call('openCheckout')
+            ->call('completeSale')
+            ->assertDispatched('toast', type: 'error');
+
+        $this->assertSame(0, Sale::count());
+        $this->assertSame(10, (int) $product->batches()->sum('stock'), 'El stock queda intacto.');
+    }
 }

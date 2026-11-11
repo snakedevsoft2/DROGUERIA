@@ -334,4 +334,23 @@ class CierreDeCajaTest extends TestCase
         $this->assertSame(4000.0, $productos[0]->profit, 'Primero el que más ganancia dejó.');
         $this->assertSame(3, $productos[1]->units);
     }
+
+    public function test_una_fecha_mal_escrita_en_la_direccion_no_tumba_la_pagina(): void
+    {
+        $this->get('/cierre-de-caja?desde=abc&hasta=xyz')->assertOk();
+
+        Livewire::withQueryParams(['desde' => 'abc', 'hasta' => 'xyz'])
+            ->test(CashClosingComponent::class)
+            ->assertSet('from', now()->startOfMonth()->toDateString())
+            ->assertSet('to', now()->toDateString());
+    }
+
+    public function test_solo_acepta_dias_que_existen(): void
+    {
+        $this->assertSame('2026-10-14', SalesSummary::validDay('2026-10-14'));
+        $this->assertNull(SalesSummary::validDay('2026-02-31'));
+        $this->assertNull(SalesSummary::validDay('14/10/2026'));
+        $this->assertNull(SalesSummary::validDay(''));
+        $this->assertNull(SalesSummary::validDay(null));
+    }
 }
